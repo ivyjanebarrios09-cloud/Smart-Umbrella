@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
   Card,
   CardContent,
@@ -8,26 +8,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Slider } from "@/components/ui/slider";
-import { Badge } from "@/components/ui/badge";
 import {
   Bell,
-  Bluetooth,
-  BluetoothConnected,
-  BluetoothSearching,
   CloudRain,
   Cloudy,
-  Lightbulb,
-  MapPin,
-  Settings,
   Sun,
   Thermometer,
   Wind,
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { Separator } from "@/components/ui/separator";
 
 const weatherConditions = {
   Sunny: <Sun className="h-6 w-6 text-yellow-500" />,
@@ -38,38 +26,12 @@ const weatherConditions = {
 type WeatherCondition = keyof typeof weatherConditions;
 
 export function DashboardClient() {
-  const [bleStatus, setBleStatus] = useState<"connected" | "disconnected" | "scanning">("disconnected");
-  const [isLedOn, setIsLedOn] = useState(false);
-  const [weather, setWeather] = useState<{ temp: number; condition: WeatherCondition; wind: number } | null>(null);
-  const [leftBehindAlert, setLeftBehindAlert] = useState(false);
-  const [sensitivity, setSensitivity] = useState([50]);
-  const [rainAlert, setRainAlert] = useState(false);
-
-  const { toast } = useToast();
-
-  const handleBleToggle = () => {
-      if (bleStatus === 'connected') {
-          setBleStatus('disconnected');
-      } else {
-          setBleStatus('scanning');
-          // Mock connection
-          setTimeout(() => setBleStatus('connected'), 2000);
-      }
-  }
-
-  const handleFind = () => {
-    if (bleStatus === 'connected') {
-        toast({
-            title: "Finding Umbrella...",
-            description: "Your umbrella's LED is now flashing.",
-        });
-    }
-  }
+  const [weather, setWeather] = React.useState<{ temp: number; condition: WeatherCondition; wind: number } | null>(null);
 
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {/* Weather Card */}
-        <Card className="lg:col-span-1">
+        <Card className="lg:col-span-3">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                 {weather ? weatherConditions[weather.condition] : <Cloudy className="h-6 w-6 text-gray-500" />}
@@ -101,71 +63,6 @@ export function DashboardClient() {
                 )}
             </CardContent>
         </Card>
-
-      {/* Umbrella Control Card */}
-      <Card className="lg:col-span-1">
-        <CardHeader>
-          <CardTitle>Umbrella Control</CardTitle>
-          <CardDescription>Manage your smart umbrella's features.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="flex items-center justify-between">
-            <span className="font-medium">Bluetooth Status</span>
-            <Badge variant={bleStatus === "connected" ? "default" : "secondary"} className={`transition-colors ${bleStatus === "connected" ? "bg-green-500/20 text-green-700 dark:bg-green-500/10 dark:text-green-400 border-green-500/30" : ""}`}>
-                {bleStatus === "connected" && <BluetoothConnected className="mr-2 h-4 w-4" />}
-                {bleStatus === "disconnected" && <Bluetooth className="mr-2 h-4 w-4" />}
-                {bleStatus === "scanning" && <BluetoothSearching className="mr-2 h-4 w-4 animate-pulse" />}
-                {bleStatus.charAt(0).toUpperCase() + bleStatus.slice(1)}
-            </Badge>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <span className="font-medium">Handle LED</span>
-            <div className="flex items-center gap-2">
-                <Lightbulb className={`h-5 w-5 transition-colors ${isLedOn ? 'text-yellow-400' : 'text-muted-foreground'}`} />
-                <Switch checked={isLedOn} onCheckedChange={setIsLedOn} />
-            </div>
-          </div>
-          <Separator />
-          <div className="grid grid-cols-2 gap-4">
-            <Button variant="outline" onClick={handleBleToggle}>
-                {bleStatus === 'connected' ? 'Disconnect' : 'Connect'}
-            </Button>
-            <Button onClick={handleFind} disabled={bleStatus !== 'connected'}>
-                <MapPin className="mr-2 h-4 w-4" /> Find
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-      
-      {/* Settings Card */}
-      <Card className="lg:col-span-1">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Settings className="h-6 w-6" />
-            <span>Alert Settings</span>
-          </CardTitle>
-          <CardDescription>Customize your notification preferences.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-            <div className="flex items-center justify-between">
-                <label htmlFor="left-behind-alert" className="font-medium">Left-Behind Alert</label>
-                <Switch id="left-behind-alert" checked={leftBehindAlert} onCheckedChange={setLeftBehindAlert} />
-            </div>
-            <div className="space-y-2">
-                <label className="font-medium">Detection Sensitivity</label>
-                <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                    <span>Near</span>
-                    <Slider value={sensitivity} onValueChange={setSensitivity} max={100} step={1} disabled={!leftBehindAlert} />
-                    <span>Far</span>
-                </div>
-            </div>
-            <div className="flex items-center justify-between">
-                <label htmlFor="rain-alert" className="font-medium">Weather Alert</label>
-                <Switch id="rain-alert" checked={rainAlert} onCheckedChange={setRainAlert} />
-            </div>
-        </CardContent>
-      </Card>
       
       {/* Notification Log */}
       <Card className="md:col-span-2 lg:col-span-3">
