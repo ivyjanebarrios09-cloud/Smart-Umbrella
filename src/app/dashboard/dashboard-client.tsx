@@ -37,21 +37,10 @@ const weatherConditions = {
 
 type WeatherCondition = keyof typeof weatherConditions;
 
-const mockNotifications = [
-    { id: 1, icon: <MapPin className="h-4 w-4" />, text: "Umbrella left behind at 'Office'", time: "2 hours ago" },
-    { id: 2, icon: <CloudRain className="h-4 w-4" />, text: "Rain expected in 30 minutes. Don't forget your umbrella!", time: "8 hours ago" },
-    { id: 3, icon: <Bluetooth className="h-4 w-4" />, text: "Umbrella successfully connected.", time: "1 day ago" },
-];
-
-
 export function DashboardClient() {
-  const [bleStatus, setBleStatus] = useState<"connected" | "disconnected" | "scanning">("connected");
+  const [bleStatus, setBleStatus] = useState<"connected" | "disconnected" | "scanning">("disconnected");
   const [isLedOn, setIsLedOn] = useState(false);
-  const [weather, setWeather] = useState<{ temp: number; condition: WeatherCondition; wind: number }>({
-    temp: 18,
-    condition: "Rainy",
-    wind: 12
-  });
+  const [weather, setWeather] = useState<{ temp: number; condition: WeatherCondition; wind: number } | null>(null);
   const [leftBehindAlert, setLeftBehindAlert] = useState(true);
   const [sensitivity, setSensitivity] = useState([50]);
   const [rainAlert, setRainAlert] = useState(true);
@@ -59,17 +48,12 @@ export function DashboardClient() {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (bleStatus === 'disconnected') {
-      const timer = setTimeout(() => {
-          if(leftBehindAlert) {
-            toast({
-              title: "Umbrella Left Behind!",
-              description: "You seem to have left your UmbraGuard behind.",
-              variant: "destructive",
-            });
-          }
-      }, 2000);
-      return () => clearTimeout(timer);
+    if (bleStatus === 'disconnected' && leftBehindAlert) {
+        toast({
+          title: "Umbrella Left Behind!",
+          description: "You seem to have left your UmbraGuard behind.",
+          variant: "destructive",
+        });
     }
   }, [bleStatus, leftBehindAlert, toast]);
 
@@ -78,15 +62,18 @@ export function DashboardClient() {
           setBleStatus('disconnected');
       } else {
           setBleStatus('scanning');
-          setTimeout(() => setBleStatus('connected'), 3000);
+          // Mock connection
+          setTimeout(() => setBleStatus('connected'), 2000);
       }
   }
 
   const handleFind = () => {
-    toast({
-        title: "Finding Umbrella...",
-        description: "Your umbrella's LED is now flashing.",
-      });
+    if (bleStatus === 'connected') {
+        toast({
+            title: "Finding Umbrella...",
+            description: "Your umbrella's LED is now flashing.",
+        });
+    }
   }
 
   return (
@@ -95,25 +82,33 @@ export function DashboardClient() {
         <Card className="lg:col-span-1">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                {weatherConditions[weather.condition]}
+                {weather ? weatherConditions[weather.condition] : <Cloudy className="h-6 w-6 text-gray-500" />}
                 <span>Today's Weather</span>
                 </CardTitle>
                 <CardDescription>London, UK</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-                <div className="flex items-center justify-center text-6xl font-bold">
-                    {weather.temp}°C
-                </div>
-                <div className="flex justify-around text-sm text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                        <Thermometer className="h-4 w-4" />
-                        <span>{weather.condition}</span>
+                {weather ? (
+                    <>
+                        <div className="flex items-center justify-center text-6xl font-bold">
+                            {weather.temp}°C
+                        </div>
+                        <div className="flex justify-around text-sm text-muted-foreground">
+                            <div className="flex items-center gap-2">
+                                <Thermometer className="h-4 w-4" />
+                                <span>{weather.condition}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Wind className="h-4 w-4" />
+                                <span>{weather.wind} km/h</span>
+                            </div>
+                        </div>
+                    </>
+                ) : (
+                    <div className="flex items-center justify-center h-24 text-muted-foreground">
+                        <p>Loading weather data...</p>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <Wind className="h-4 w-4" />
-                        <span>{weather.wind} km/h</span>
-                    </div>
-                </div>
+                )}
             </CardContent>
         </Card>
 
@@ -191,16 +186,8 @@ export function DashboardClient() {
             </CardTitle>
         </CardHeader>
         <CardContent>
-            <div className="space-y-4">
-                {mockNotifications.map((notification) => (
-                    <div key={notification.id} className="flex items-start gap-4">
-                        <div className="mt-1 text-muted-foreground">{notification.icon}</div>
-                        <div className="flex-1">
-                            <p className="text-sm">{notification.text}</p>
-                            <p className="text-xs text-muted-foreground">{notification.time}</p>
-                        </div>
-                    </div>
-                ))}
+            <div className="flex items-center justify-center h-24 text-muted-foreground">
+                <p>No notifications yet.</p>
             </div>
         </CardContent>
       </Card>
