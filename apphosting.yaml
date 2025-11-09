@@ -1,6 +1,12 @@
 # Settings to manage and configure a Firebase App Hosting backend.
 # https://firebase.google.com/docs/app-hosting/configure
 
+headers:
+  - # Enable the Web Bluetooth API.
+    # See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy/bluetooth
+    name: "Permissions-Policy"
+    value: "bluetooth=*"
+
 runConfig:
   # Increase this value if you'd like to automatically spin up
   # more instances in response to increased traffic.
