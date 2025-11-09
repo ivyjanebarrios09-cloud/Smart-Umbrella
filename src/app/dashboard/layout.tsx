@@ -16,6 +16,7 @@ import { LifeBuoy, LogOut, Settings, User } from 'lucide-react';
 import { useAuth, useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
+import { useEffect } from 'react';
 
 function Header() {
   const { user } = useUser();
@@ -106,17 +107,18 @@ export default function DashboardLayout({
   const { user, isUserLoading } = useUser();
   const router = useRouter();
 
-  if (isUserLoading) {
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.replace('/login');
+    }
+  }, [isUserLoading, user, router]);
+
+  if (isUserLoading || !user) {
     return (
       <div className="flex h-screen items-center justify-center">
         Loading...
       </div>
     );
-  }
-
-  if (!user) {
-    router.replace('/login');
-    return null;
   }
 
   return (
