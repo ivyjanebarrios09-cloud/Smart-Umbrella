@@ -41,21 +41,11 @@ export function DashboardClient() {
   const [bleStatus, setBleStatus] = useState<"connected" | "disconnected" | "scanning">("disconnected");
   const [isLedOn, setIsLedOn] = useState(false);
   const [weather, setWeather] = useState<{ temp: number; condition: WeatherCondition; wind: number } | null>(null);
-  const [leftBehindAlert, setLeftBehindAlert] = useState(true);
+  const [leftBehindAlert, setLeftBehindAlert] = useState(false);
   const [sensitivity, setSensitivity] = useState([50]);
-  const [rainAlert, setRainAlert] = useState(true);
+  const [rainAlert, setRainAlert] = useState(false);
 
   const { toast } = useToast();
-
-  useEffect(() => {
-    if (bleStatus === 'disconnected' && leftBehindAlert) {
-        toast({
-          title: "Umbrella Left Behind!",
-          description: "You seem to have left your UmbraGuard behind.",
-          variant: "destructive",
-        });
-    }
-  }, [bleStatus, leftBehindAlert, toast]);
 
   const handleBleToggle = () => {
       if (bleStatus === 'connected') {
@@ -106,7 +96,7 @@ export function DashboardClient() {
                     </>
                 ) : (
                     <div className="flex items-center justify-center h-24 text-muted-foreground">
-                        <p>Loading weather data...</p>
+                        <p>No weather data available.</p>
                     </div>
                 )}
             </CardContent>
