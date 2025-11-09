@@ -1,0 +1,241 @@
+{
+  "entities": {
+    "Umbrella": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Umbrella",
+      "type": "object",
+      "description": "Represents an umbrella owned by a user, including its settings and connection information.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the umbrella."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Umbrella). The ID of the user who owns this umbrella."
+        },
+        "name": {
+          "type": "string",
+          "description": "A descriptive name for the umbrella (e.g., 'My Blue Umbrella')."
+        },
+        "bleDeviceId": {
+          "type": "string",
+          "description": "The Bluetooth Low Energy (BLE) device ID of the umbrella's smart chip."
+        },
+        "ledEnabled": {
+          "type": "boolean",
+          "description": "Indicates whether the LED in the umbrella handle is enabled."
+        },
+        "leftBehindNotificationEnabled": {
+          "type": "boolean",
+          "description": "Indicates whether left-behind notifications are enabled for this umbrella."
+        },
+        "leftBehindDistance": {
+          "type": "number",
+          "description": "The distance threshold (in meters) for triggering a left-behind notification."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "bleDeviceId",
+        "ledEnabled",
+        "leftBehindNotificationEnabled",
+        "leftBehindDistance"
+      ]
+    },
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address.",
+          "format": "email"
+        },
+        "name": {
+          "type": "string",
+          "description": "The user's display name."
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "name"
+      ]
+    },
+    "NotificationLog": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "NotificationLog",
+      "type": "object",
+      "description": "Represents a log entry for a notification sent to the user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the notification log entry."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N NotificationLog). The ID of the user who received the notification."
+        },
+        "umbrellaId": {
+          "type": "string",
+          "description": "Reference to Umbrella. (Relationship: Umbrella 1:N NotificationLog). The ID of the umbrella associated with the notification (if applicable)."
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of notification (e.g., 'left_behind', 'weather_alert')."
+        },
+        "message": {
+          "type": "string",
+          "description": "The content of the notification."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "The date and time the notification was sent.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "type",
+        "message",
+        "timestamp"
+      ]
+    },
+    "WeatherAlertPreference": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "WeatherAlertPreference",
+      "type": "object",
+      "description": "Represents a user's preferences for weather alerts.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the weather alert preference."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N WeatherAlertPreference). The ID of the user who owns these preferences."
+        },
+        "city": {
+          "type": "string",
+          "description": "The city for which to receive weather alerts."
+        },
+        "rainAlertEnabled": {
+          "type": "boolean",
+          "description": "Indicates whether rain alerts are enabled."
+        },
+        "temperatureAlertEnabled": {
+          "type": "boolean",
+          "description": "Indicates whether temperature alerts are enabled."
+        },
+        "temperatureThreshold": {
+          "type": "number",
+          "description": "The temperature threshold (in Celsius) for triggering a temperature alert."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "city",
+        "rainAlertEnabled",
+        "temperatureAlertEnabled",
+        "temperatureThreshold"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Collection to store user profiles.  User documents are only accessible by the user themselves.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/umbrellas/{umbrellaId}",
+        "definition": {
+          "entityName": "Umbrella",
+          "schema": {
+            "$ref": "#/backend/entities/Umbrella"
+          },
+          "description": "Collection to store umbrellas owned by a user. Includes denormalized 'userId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "umbrellaId",
+              "description": "The unique identifier of the umbrella."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/notification_logs/{notificationLogId}",
+        "definition": {
+          "entityName": "NotificationLog",
+          "schema": {
+            "$ref": "#/backend/entities/NotificationLog"
+          },
+          "description": "Collection to store notification logs for a user. Includes denormalized 'userId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "notificationLogId",
+              "description": "The unique identifier of the notification log entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/weather_alert_preferences/{weatherAlertPreferenceId}",
+        "definition": {
+          "entityName": "WeatherAlertPreference",
+          "schema": {
+            "$ref": "#/backend/entities/WeatherAlertPreference"
+          },
+          "description": "Collection to store weather alert preferences for a user. Includes denormalized 'userId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "weatherAlertPreferenceId",
+              "description": "The unique identifier of the weather alert preference."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed to ensure security, scalability, and ease of debugging, following the principles of Authorization Independence, Clarity of Intent, DBAC, and QAPs. User-owned data is stored under the `/users/{userId}` path, providing clear ownership and simplifying security rules. Denormalization is used to avoid `get()` calls in security rules, ensuring atomic operations and making rules easier to understand.  All collections are structurally segregated based on access needs.\n\n*   **Authorization Independence**: Achieved by storing user-specific data (Umbrellas, NotificationLogs, WeatherAlertPreferences) directly under the `/users/{userId}` collection, thus eliminating the need for hierarchical authorization and `get()` calls in security rules.\n*   **QAPs Support**:  The structure supports secure `list` operations by ensuring that each collection maintains a homogeneous security posture.  For example, only the authenticated user can access their own `/users/{userId}/umbrellas` collection, and global roles are managed by existence checks in dedicated collections. Path-based ownership ensures the ability to secure `list` operations.\n\nThe schema focuses on path-based ownership for private data (Umbrellas, NotificationLogs, WeatherAlertPreferences)."
+  }
+}
