@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Logo } from "@/components/icons/logo";
 import { LifeBuoy, LogOut, Settings, User } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 function Header() {
   return (
@@ -23,6 +24,7 @@ function Header() {
           </Link>
         </div>
         <div className="flex items-center gap-4">
+          <ThemeToggle />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">
