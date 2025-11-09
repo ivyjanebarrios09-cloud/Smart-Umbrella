@@ -1,3 +1,10 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "umbra-guard-hero",
+      "description": "A person holding a smart umbrella in the rain, with a city background.",
+      "imageUrl": "https://images.unsplash.com/photo-1632973541997-971a2eb8331d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHx1bWJyZWxsYSUyMHJhaW58ZW58MHx8fHwxNzYyNjk5OTg0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "umbrella rain"
+    }
+  ]
 }
