@@ -25,8 +25,16 @@ const weatherConditions = {
 
 type WeatherCondition = keyof typeof weatherConditions;
 
+type ForecastDay = {
+  day: string;
+  condition: WeatherCondition;
+  temp: number;
+};
+
 export function DashboardClient() {
   const [weather, setWeather] = React.useState<{ temp: number; condition: WeatherCondition; wind: number } | null>(null);
+  const [forecast, setForecast] = React.useState<ForecastDay[] | null>(null);
+
 
   useEffect(() => {
     // Mock fetching weather data
@@ -36,6 +44,16 @@ export function DashboardClient() {
         wind: 12,
     };
     setWeather(mockWeatherData);
+
+    const mockForecast: ForecastDay[] = [
+      { day: "Mon", condition: "Sunny", temp: 20 },
+      { day: "Tue", condition: "Cloudy", temp: 18 },
+      { day: "Wed", condition: "Rainy", temp: 16 },
+      { day: "Thu", condition: "Sunny", temp: 22 },
+      { day: "Fri", condition: "Cloudy", temp: 21 },
+    ];
+    setForecast(mockForecast);
+
   }, []);
 
   return (
@@ -88,9 +106,36 @@ export function DashboardClient() {
                 )}
             </CardContent>
         </Card>
+
+        {/* Weather Forecast Card */}
+        <Card className="lg:col-span-1">
+          <CardHeader>
+            <CardTitle>5-Day Forecast</CardTitle>
+            <CardDescription>Upcoming weather</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {forecast ? (
+              <div className="space-y-4">
+                {forecast.map((day) => (
+                  <div key={day.day} className="flex items-center justify-between">
+                    <span className="font-medium">{day.day}</span>
+                    <div className="flex items-center gap-2">
+                      {weatherConditions[day.condition].icon}
+                      <span>{day.temp}°C</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-24 text-muted-foreground">
+                  <p>Loading forecast...</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       
       {/* Notification Log */}
-      <Card className="lg:col-span-1">
+      <Card className="lg:col-span-3">
         <CardHeader>
             <CardTitle className="flex items-center gap-2">
                 <Bell className="h-6 w-6" />
