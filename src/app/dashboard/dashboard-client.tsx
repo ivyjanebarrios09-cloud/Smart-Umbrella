@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useMemo } from "react";
 import {
   Card,
   CardContent,
@@ -36,10 +36,20 @@ export function DashboardClient() {
     return ref(database, 'weather');
   }, [database]);
 
-  const { data: weather, isLoading: isWeatherLoading } = useRtdbValue<WeatherData>(weatherRef);
+  const { data: weatherHistory, isLoading: isWeatherLoading } = useRtdbValue<{[key: string]: WeatherData}>(weatherRef);
+  
+  const latestWeather = useMemo(() => {
+    if (!weatherHistory) return null;
+    const allEntries = Object.values(weatherHistory);
+    if (allEntries.length === 0) return null;
+    // Assuming the last entry is the latest one.
+    // A more robust solution might use timestamps if available.
+    return allEntries.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))[0];
+  }, [weatherHistory]);
 
-  const displayCondition = weather?.condition && weatherConditions[weather.condition]
-    ? weather.condition
+
+  const displayCondition = latestWeather?.condition && weatherConditions[latestWeather.condition]
+    ? latestWeather.condition
     : 'Cloudy';
 
 
@@ -59,9 +69,9 @@ export function DashboardClient() {
                     <div className="flex items-center justify-center h-24 text-muted-foreground">
                         <p>Loading...</p>
                     </div>
-                ) : weather ? (
+                ) : latestWeather ? (
                     <div className="flex flex-col items-center justify-center space-y-2">
-                        <div className="text-6xl font-bold">{weather.temperature?.toFixed(1)}°C</div>
+                        <div className="text-6xl font-bold">{latestWeather.temperature?.toFixed(1)}°C</div>
                         <div className="flex items-center gap-2 text-muted-foreground">
                             <Thermometer className="h-5 w-5" />
                             <span>{weatherConditions[displayCondition].name}</span>
@@ -89,9 +99,9 @@ export function DashboardClient() {
                     <div className="flex items-center justify-center h-24 text-muted-foreground">
                         <p>Loading...</p>
                     </div>
-                ) : weather ? (
+                ) : latestWeather ? (
                      <div className="flex flex-col items-center justify-center space-y-2">
-                        <div className="text-6xl font-bold">{weather.windspeed?.toFixed(1)}</div>
+                        <div className="text-6xl font-bold">{latestWeather.windspeed?.toFixed(1)}</div>
                         <div className="text-sm text-muted-foreground">km/h</div>
                     </div>
                 ) : (
