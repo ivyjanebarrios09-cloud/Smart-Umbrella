@@ -51,6 +51,8 @@ export function DashboardClient() {
       { day: "Wed", condition: "Rainy", temp: 16 },
       { day: "Thu", condition: "Sunny", temp: 22 },
       { day: "Fri", condition: "Cloudy", temp: 21 },
+      { day: "Sat", condition: "Sunny", temp: 23 },
+      { day: "Sun", condition: "Rainy", temp: 19 },
     ];
     setForecast(mockForecast);
 
@@ -110,7 +112,7 @@ export function DashboardClient() {
         {/* Weather Forecast Card */}
         <Card className="lg:col-span-1">
           <CardHeader>
-            <CardTitle>5-Day Forecast</CardTitle>
+            <CardTitle>7-Day Forecast</CardTitle>
             <CardDescription>Upcoming weather</CardDescription>
           </CardHeader>
           <CardContent>
