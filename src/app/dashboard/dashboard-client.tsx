@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/card";
 import {
   Bell,
+  Calendar,
   CloudRain,
   Cloudy,
   Sun,
@@ -26,6 +27,16 @@ const weatherConditions = {
   Rainy: { icon: <CloudRain className="h-6 w-6 text-blue-500" />, name: "Rainy" },
   Cloudy: { icon: <Cloudy className="h-6 w-6 text-gray-500" />, name: "Cloudy" },
 };
+
+const mockForecast = [
+    { day: 'Mon', icon: <Sun className="h-6 w-6 text-yellow-500" />, high: 28, low: 18 },
+    { day: 'Tue', icon: <Cloudy className="h-6 w-6 text-gray-400" />, high: 26, low: 17 },
+    { day: 'Wed', icon: <CloudRain className="h-6 w-6 text-blue-500" />, high: 24, low: 16 },
+    { day: 'Thu', icon: <Sun className="h-6 w-6 text-yellow-500" />, high: 29, low: 19 },
+    { day: 'Fri', icon: <Cloudy className="h-6 w-6 text-gray-400" />, high: 27, low: 18 },
+    { day: 'Sat', icon: <Sun className="h-6 w-6 text-yellow-500" />, high: 30, low: 20 },
+    { day: 'Sun', icon: <CloudRain className="h-6 w-6 text-blue-500" />, high: 25, low: 17 },
+];
 
 
 export function DashboardClient() {
@@ -116,6 +127,28 @@ export function DashboardClient() {
             </CardContent>
         </Card>
       
+        {/* 7-Day Forecast Card */}
+        <Card className="lg:col-span-1">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <Calendar className="h-6 w-6" />
+                    <span>7-Day Forecast</span>
+                </CardTitle>
+                <CardDescription>Upcoming weather at a glance</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <ul className="space-y-4">
+                    {mockForecast.map((day, index) => (
+                        <li key={index} className="flex items-center justify-between">
+                            <span className="font-semibold w-12">{day.day}</span>
+                            <span className="flex-shrink-0">{day.icon}</span>
+                            <span className="w-20 text-right text-muted-foreground">{day.high}° / {day.low}°</span>
+                        </li>
+                    ))}
+                </ul>
+            </CardContent>
+        </Card>
+
       {/* Notification Log */}
       <Card className="lg:col-span-3">
         <CardHeader>
