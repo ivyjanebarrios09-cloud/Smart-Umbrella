@@ -16,8 +16,8 @@ import {
   Thermometer,
   Wind,
 } from "lucide-react";
-import { useDoc, useFirestore, useMemoFirebase } from "@/firebase";
-import { doc } from "firebase/firestore";
+import { useDatabase, useMemoFirebase, useRtdbValue } from "@/firebase";
+import { ref } from "firebase/database";
 import { WeatherData, WeatherCondition } from "@/lib/types";
 
 
@@ -36,14 +36,14 @@ type ForecastDay = {
 };
 
 export function DashboardClient() {
-  const firestore = useFirestore();
+  const database = useDatabase();
   
-  const weatherDocRef = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return doc(firestore, 'weather', 'latest');
-  }, [firestore]);
+  const weatherRef = useMemoFirebase(() => {
+    if (!database) return null;
+    return ref(database, 'weather');
+  }, [database]);
 
-  const { data: weather, isLoading: isWeatherLoading } = useDoc<WeatherData>(weatherDocRef);
+  const { data: weather, isLoading: isWeatherLoading } = useRtdbValue<WeatherData>(weatherRef);
   const [forecast, setForecast] = React.useState<ForecastDay[] | null>(null);
 
 
