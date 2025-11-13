@@ -16,14 +16,18 @@ import {
   Thermometer,
   Wind,
 } from "lucide-react";
+import { useDoc, useFirestore, useMemoFirebase } from "@/firebase";
+import { doc } from "firebase/firestore";
+import { WeatherData, WeatherCondition } from "@/lib/types";
+
 
 const weatherConditions = {
   Sunny: { icon: <Sun className="h-6 w-6 text-yellow-500" />, name: "Sunny" },
   Rainy: { icon: <CloudRain className="h-6 w-6 text-blue-500" />, name: "Rainy" },
   Cloudy: { icon: <Cloudy className="h-6 w-6 text-gray-500" />, name: "Cloudy" },
+  // Add other conditions as needed
 };
 
-type WeatherCondition = keyof typeof weatherConditions;
 
 type ForecastDay = {
   day: string;
@@ -32,19 +36,19 @@ type ForecastDay = {
 };
 
 export function DashboardClient() {
-  const [weather, setWeather] = React.useState<{ temp: number; condition: WeatherCondition; wind: number } | null>(null);
+  const firestore = useFirestore();
+  
+  const weatherDocRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, 'weather', 'latest');
+  }, [firestore]);
+
+  const { data: weather, isLoading: isWeatherLoading } = useDoc<WeatherData>(weatherDocRef);
   const [forecast, setForecast] = React.useState<ForecastDay[] | null>(null);
 
 
   useEffect(() => {
-    // Mock fetching weather data
-    const mockWeatherData = {
-        temp: 18,
-        condition: 'Sunny' as WeatherCondition,
-        wind: 12,
-    };
-    setWeather(mockWeatherData);
-
+    // Mock forecast data until a real source is available
     const mockForecast: ForecastDay[] = [
       { day: "Mon", condition: "Sunny", temp: 20 },
       { day: "Tue", condition: "Cloudy", temp: 18 },
@@ -58,29 +62,38 @@ export function DashboardClient() {
 
   }, []);
 
+  const displayCondition = weather?.condition && weatherConditions[weather.condition]
+    ? weather.condition
+    : 'Cloudy';
+
+
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {/* Temperature Card */}
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                {weather ? weatherConditions[weather.condition].icon : <Cloudy className="h-6 w-6 text-gray-500" />}
+                {isWeatherLoading ? <Cloudy className="h-6 w-6 text-gray-500" /> : weatherConditions[displayCondition].icon}
                 <span>Temperature</span>
                 </CardTitle>
                 <CardDescription>London, UK</CardDescription>
             </CardHeader>
             <CardContent>
-                {weather ? (
+                {isWeatherLoading ? (
+                    <div className="flex items-center justify-center h-24 text-muted-foreground">
+                        <p>Loading...</p>
+                    </div>
+                ) : weather ? (
                     <div className="flex flex-col items-center justify-center space-y-2">
-                        <div className="text-6xl font-bold">{weather.temp}°C</div>
+                        <div className="text-6xl font-bold">{weather.temperature?.toFixed(1)}°C</div>
                         <div className="flex items-center gap-2 text-muted-foreground">
                             <Thermometer className="h-5 w-5" />
-                            <span>{weatherConditions[weather.condition].name}</span>
+                            <span>{weatherConditions[displayCondition].name}</span>
                         </div>
                     </div>
                 ) : (
                     <div className="flex items-center justify-center h-24 text-muted-foreground">
-                        <p>Loading...</p>
+                        <p>No weather data available.</p>
                     </div>
                 )}
             </CardContent>
@@ -96,14 +109,18 @@ export function DashboardClient() {
                  <CardDescription>Current wind speed</CardDescription>
             </CardHeader>
             <CardContent>
-                {weather ? (
+                {isWeatherLoading ? (
+                    <div className="flex items-center justify-center h-24 text-muted-foreground">
+                        <p>Loading...</p>
+                    </div>
+                ) : weather ? (
                      <div className="flex flex-col items-center justify-center space-y-2">
-                        <div className="text-6xl font-bold">{weather.wind}</div>
+                        <div className="text-6xl font-bold">{weather.windspeed?.toFixed(1)}</div>
                         <div className="text-sm text-muted-foreground">km/h</div>
                     </div>
                 ) : (
                     <div className="flex items-center justify-center h-24 text-muted-foreground">
-                        <p>Loading...</p>
+                        <p>No wind data available.</p>
                     </div>
                 )}
             </CardContent>
