@@ -25,15 +25,8 @@ const weatherConditions = {
   Sunny: { icon: <Sun className="h-6 w-6 text-yellow-500" />, name: "Sunny" },
   Rainy: { icon: <CloudRain className="h-6 w-6 text-blue-500" />, name: "Rainy" },
   Cloudy: { icon: <Cloudy className="h-6 w-6 text-gray-500" />, name: "Cloudy" },
-  // Add other conditions as needed
 };
 
-
-type ForecastDay = {
-  day: string;
-  condition: WeatherCondition;
-  temp: number;
-};
 
 export function DashboardClient() {
   const database = useDatabase();
@@ -44,23 +37,6 @@ export function DashboardClient() {
   }, [database]);
 
   const { data: weather, isLoading: isWeatherLoading } = useRtdbValue<WeatherData>(weatherRef);
-  const [forecast, setForecast] = React.useState<ForecastDay[] | null>(null);
-
-
-  useEffect(() => {
-    // Mock forecast data until a real source is available
-    const mockForecast: ForecastDay[] = [
-      { day: "Mon", condition: "Sunny", temp: 20 },
-      { day: "Tue", condition: "Cloudy", temp: 18 },
-      { day: "Wed", condition: "Rainy", temp: 16 },
-      { day: "Thu", condition: "Sunny", temp: 22 },
-      { day: "Fri", condition: "Cloudy", temp: 21 },
-      { day: "Sat", condition: "Sunny", temp: 23 },
-      { day: "Sun", condition: "Rainy", temp: 19 },
-    ];
-    setForecast(mockForecast);
-
-  }, []);
 
   const displayCondition = weather?.condition && weatherConditions[weather.condition]
     ? weather.condition
@@ -124,33 +100,6 @@ export function DashboardClient() {
                     </div>
                 )}
             </CardContent>
-        </Card>
-
-        {/* Weather Forecast Card */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle>7-Day Forecast</CardTitle>
-            <CardDescription>Upcoming weather</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {forecast ? (
-              <div className="space-y-4">
-                {forecast.map((day) => (
-                  <div key={day.day} className="flex items-center justify-between">
-                    <span className="font-medium">{day.day}</span>
-                    <div className="flex items-center gap-2">
-                      {weatherConditions[day.condition].icon}
-                      <span>{day.temp}°C</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="flex items-center justify-center h-24 text-muted-foreground">
-                  <p>Loading forecast...</p>
-              </div>
-            )}
-          </CardContent>
         </Card>
       
       {/* Notification Log */}
