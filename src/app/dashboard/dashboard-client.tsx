@@ -62,7 +62,11 @@ export function DashboardClient() {
                 {isWeatherLoading ? <Cloudy className="h-6 w-6 text-gray-500" /> : weatherConditions[displayCondition].icon}
                 <span>Temperature</span>
                 </CardTitle>
-                <CardDescription>London, UK</CardDescription>
+                <CardDescription>
+                    {isWeatherLoading
+                        ? 'Loading location...'
+                        : latestWeather?.location || 'Unknown Location'}
+                </CardDescription>
             </CardHeader>
             <CardContent>
                 {isWeatherLoading ? (

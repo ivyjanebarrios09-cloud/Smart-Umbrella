@@ -6,4 +6,5 @@ export interface WeatherData {
   temperature: number;
   windspeed: number;
   timestamp: number;
+  location: string;
 }
