@@ -31,11 +31,13 @@ const weatherConditions: Record<WeatherCondition, { icon: JSX.Element, name: str
 };
 
 const getWeatherConditionFromCode = (code: number): WeatherCondition => {
+    // Weather code interpretation based on WMO codes
     if (code <= 1) return "Sunny";
     if (code === 2) return "Partly cloudy";
     if (code === 3) return "Cloudy";
-    if (code >= 51) return "Rainy";
-    return "Cloudy";
+    if (code >= 51 && code <= 67) return "Rainy"; // Drizzle/Rain
+    if (code >= 80 && code <= 82) return "Rainy"; // Rain showers
+    return "Cloudy"; // Default for other codes
 }
 
 
@@ -58,6 +60,7 @@ export function DashboardClient() {
     if (!weatherHistory) return null;
     const allEntries = Object.values(weatherHistory);
     if (allEntries.length === 0) return null;
+    // Find the entry with the most recent timestamp
     return allEntries.sort((a, b) => (b.timestamp_ms || 0) - (a.timestamp_ms || 0))[0];
   }, [weatherHistory]);
 
@@ -69,7 +72,7 @@ export function DashboardClient() {
   const displayCondition = weatherConditions[currentCondition];
 
   const forecastArray: DailyForecast[] = useMemo(() => {
-    if (!latestWeather || !latestWeather.time) return [];
+    if (!latestWeather || !latestWeather.time || !latestWeather.weathercode || !latestWeather.temperature_2m_max || !latestWeather.temperature_2m_min) return [];
     
     return latestWeather.time.map((date, index) => ({
         date,
