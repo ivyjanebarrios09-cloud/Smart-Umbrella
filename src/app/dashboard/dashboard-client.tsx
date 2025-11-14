@@ -14,6 +14,7 @@ import {
   Calendar,
   CloudRain,
   Cloudy,
+  MapPin,
   Sun,
   Thermometer,
   Wind,
@@ -69,8 +70,6 @@ export function DashboardClient() {
   const forecastArray: DailyForecast[] | null = useMemo(() => {
     if (!latestWeather || !latestWeather.forecast) return null;
     
-    // The forecast is an object, not an array, so we need to convert it.
-    // It seems to be the format from your very first request.
     if (typeof latestWeather.forecast === 'object' && !Array.isArray(latestWeather.forecast)) {
        const forecastObj = latestWeather.forecast as any;
        if(forecastObj.time && forecastObj.weathercode && forecastObj.temperature_2m_max && forecastObj.temperature_2m_min) {
@@ -84,12 +83,18 @@ export function DashboardClient() {
        }
     }
     
-    // Handle if it's already an array
     if (Array.isArray(latestWeather.forecast)) {
       return latestWeather.forecast.map(day => ({...day, condition: getWeatherConditionFromCode(day.weathercode)}));
     }
 
     return null;
+  }, [latestWeather]);
+
+  const mapSrc = useMemo(() => {
+    if (latestWeather?.latitude && latestWeather?.longitude) {
+      return `https://maps.google.com/maps?q=${latestWeather.latitude},${latestWeather.longitude}&hl=es;z=14&output=embed`;
+    }
+    return "";
   }, [latestWeather]);
 
 
@@ -155,9 +160,41 @@ export function DashboardClient() {
                 )}
             </CardContent>
         </Card>
+
+        {/* Map Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MapPin className="h-6 w-6" />
+              <span>Last Known Location</span>
+            </CardTitle>
+            <CardDescription>GPS coordinates of the umbrella</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isWeatherLoading ? (
+              <div className="flex items-center justify-center h-48 text-muted-foreground">
+                <p>Loading map...</p>
+              </div>
+            ) : mapSrc ? (
+              <div className="aspect-video overflow-hidden rounded-lg">
+                <iframe
+                  width="100%"
+                  height="100%"
+                  loading="lazy"
+                  allowFullScreen
+                  src={mapSrc}
+                ></iframe>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-48 text-muted-foreground">
+                <p>No location data available.</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       
         {/* 7-Day Forecast Card */}
-        <Card className="lg:col-span-1">
+        <Card className="lg:col-span-2">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <Calendar className="h-6 w-6" />
