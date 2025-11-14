@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo } from "react";
@@ -19,7 +20,7 @@ import {
 } from "lucide-react";
 import { useDatabase, useMemoFirebase, useRtdbValue } from "@/firebase";
 import { ref } from "firebase/database";
-import { WeatherData, WeatherCondition, ForecastData } from "@/lib/types";
+import { WeatherData } from "@/lib/types";
 
 
 const weatherConditions = {
