@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Logo } from '@/components/icons/logo';
-import { LogOut, Settings, User, Bell } from 'lucide-react';
+import { LogOut, Settings, User, Bell, History } from 'lucide-react';
 import { useAuth, useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
@@ -85,6 +85,12 @@ function Header() {
                 <DropdownMenuItem>
                   <Bell className="mr-2 h-4 w-4" />
                   <span>Send Alert</span>
+                </DropdownMenuItem>
+              </Link>
+              <Link href="/dashboard/notifications">
+                <DropdownMenuItem>
+                  <History className="mr-2 h-4 w-4" />
+                  <span>Notification History</span>
                 </DropdownMenuItem>
               </Link>
               <DropdownMenuSeparator />

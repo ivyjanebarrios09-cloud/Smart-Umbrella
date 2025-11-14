@@ -33,3 +33,11 @@ export interface Umbrella {
   name: string;
 }
     
+export interface NotificationLog {
+  id: string;
+  userId: string;
+  umbrellaId: string;
+  type: string;
+  message: string;
+  timestamp: string;
+}
