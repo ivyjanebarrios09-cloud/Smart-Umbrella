@@ -77,7 +77,8 @@ export default function UmbrellaAlertPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to send alert.');
+        const errorData = await response.json();
+        throw new Error(errorData.details || 'Failed to send alert.');
       }
 
       toast({
@@ -85,12 +86,12 @@ export default function UmbrellaAlertPage() {
         description: 'Your "left-behind" notification has been logged.',
       });
       form.reset();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending alert:', error);
       toast({
         variant: 'destructive',
         title: 'Uh oh! Something went wrong.',
-        description: 'There was a problem sending your alert.',
+        description: error.message || 'There was a problem sending your alert.',
       });
     }
   }
