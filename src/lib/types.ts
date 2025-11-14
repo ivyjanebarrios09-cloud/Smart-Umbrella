@@ -28,15 +28,6 @@ export interface WeatherData {
 }
 
 
-export interface NotificationLog {
-    id: string;
-    userId: string;
-    umbrellaId?: string;
-    type: string;
-    message: string;
-    timestamp: string;
-}
-
 export interface Umbrella {
   id: string;
   name: string;
