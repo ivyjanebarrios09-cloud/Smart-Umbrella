@@ -18,7 +18,8 @@ import {
   Thermometer,
   Wind,
 } from "lucide-react";
-import { useDatabase, useMemoFirebase, useRtdbValue } from "@/firebase";
+import { useDatabase, useMemoFirebase } from "@/firebase";
+import { useRtdbValue } from "@/firebase/rtdb/use-rtdb-value";
 import { ref } from "firebase/database";
 import { WeatherData, WeatherCondition, DailyForecast } from "@/lib/types";
 
@@ -43,7 +44,8 @@ const getWeatherConditionFromCode = (code: number): WeatherCondition => {
 
 const getDayOfWeek = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { weekday: 'short' });
+    // Use UTC date parts to avoid timezone shifts affecting the displayed day
+    return new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()).toLocaleDateString('en-US', { weekday: 'short' });
 }
 
 export function DashboardClient() {
@@ -67,9 +69,8 @@ export function DashboardClient() {
   const currentTemperature = latestWeather?.temperature_2m_max?.[0];
   const currentWindspeed = latestWeather?.windspeed_10m_max?.[0];
   const currentConditionCode = latestWeather?.weathercode?.[0];
-  const currentCondition = currentConditionCode !== undefined ? getWeatherConditionFromCode(currentConditionCode) : "Cloudy";
-
-  const displayCondition = weatherConditions[currentCondition];
+  const currentConditionName = currentConditionCode !== undefined ? getWeatherConditionFromCode(currentConditionCode) : "Cloudy";
+  const displayCondition = weatherConditions[currentConditionName];
 
   const forecastArray: DailyForecast[] = useMemo(() => {
     if (!latestWeather || !latestWeather.time || !latestWeather.weathercode || !latestWeather.temperature_2m_max || !latestWeather.temperature_2m_min) return [];
@@ -91,7 +92,7 @@ export function DashboardClient() {
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                {isWeatherLoading ? <Cloudy className="h-6 w-6 text-gray-500" /> : displayCondition.icon}
+                {isWeatherLoading ? <Cloudy className="h-6 w-6 text-gray-500" /> : displayCondition?.icon}
                 <span>Temperature</span>
                 </CardTitle>
                 <CardDescription>
@@ -110,7 +111,7 @@ export function DashboardClient() {
                         <div className="text-6xl font-bold">{currentTemperature.toFixed(1)}°C</div>
                         <div className="flex items-center gap-2 text-muted-foreground">
                             <Thermometer className="h-5 w-5" />
-                            <span>{displayCondition.name}</span>
+                            <span>{displayCondition?.name}</span>
                         </div>
                     </div>
                 ) : (
