@@ -14,9 +14,10 @@ export interface WeatherData {
   longitude: number;
   location_str: string;
   timestamp_ms: number;
-  time: string[];
-  weathercode: number[];
-  temperature_2m_max: number[];
-  temperature_2m_min: number[];
-  windspeed_10m_max: number[];
+  current: {
+    temperature: number;
+    windspeed: number;
+    condition: WeatherCondition;
+  };
+  forecast: DailyForecast[];
 }

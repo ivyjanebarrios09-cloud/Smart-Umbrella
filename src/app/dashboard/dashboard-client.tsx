@@ -23,8 +23,7 @@ import { useRtdbValue } from "@/firebase/rtdb/use-rtdb-value";
 import { ref } from "firebase/database";
 import { WeatherData, WeatherCondition, DailyForecast } from "@/lib/types";
 
-
-const weatherConditions: Record<WeatherCondition, { icon: JSX.Element, name: string }> = {
+const weatherConditions: Record<string, { icon: JSX.Element, name: string }> = {
   Sunny: { icon: <Sun className="h-6 w-6 text-yellow-500" />, name: "Sunny" },
   Rainy: { icon: <CloudRain className="h-6 w-6 text-blue-500" />, name: "Rainy" },
   Cloudy: { icon: <Cloudy className="h-6 w-6 text-gray-500" />, name: "Cloudy" },
@@ -32,19 +31,16 @@ const weatherConditions: Record<WeatherCondition, { icon: JSX.Element, name: str
 };
 
 const getWeatherConditionFromCode = (code: number): WeatherCondition => {
-    // Weather code interpretation based on WMO codes
     if (code <= 1) return "Sunny";
     if (code === 2) return "Partly cloudy";
     if (code === 3) return "Cloudy";
-    if (code >= 51 && code <= 67) return "Rainy"; // Drizzle/Rain
-    if (code >= 80 && code <= 82) return "Rainy"; // Rain showers
-    return "Cloudy"; // Default for other codes
+    if (code >= 51 && code <= 67) return "Rainy"; 
+    if (code >= 80 && code <= 82) return "Rainy";
+    return "Cloudy";
 }
-
 
 const getDayOfWeek = (dateString: string) => {
     const date = new Date(dateString);
-    // Use UTC date parts to avoid timezone shifts affecting the displayed day
     return new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()).toLocaleDateString('en-US', { weekday: 'short' });
 }
 
@@ -62,27 +58,38 @@ export function DashboardClient() {
     if (!weatherHistory) return null;
     const allEntries = Object.values(weatherHistory);
     if (allEntries.length === 0) return null;
-    // Find the entry with the most recent timestamp
     return allEntries.sort((a, b) => (b.timestamp_ms || 0) - (a.timestamp_ms || 0))[0];
   }, [weatherHistory]);
 
-  const currentTemperature = latestWeather?.temperature_2m_max?.[0];
-  const currentWindspeed = latestWeather?.windspeed_10m_max?.[0];
-  const currentConditionCode = latestWeather?.weathercode?.[0];
-  const currentConditionName = currentConditionCode !== undefined ? getWeatherConditionFromCode(currentConditionCode) : "Cloudy";
+  const currentTemperature = latestWeather?.current?.temperature;
+  const currentWindspeed = latestWeather?.current?.windspeed;
+  const currentConditionName = latestWeather?.current?.condition || "Cloudy";
   const displayCondition = weatherConditions[currentConditionName];
-
-  const forecastArray: DailyForecast[] = useMemo(() => {
-    if (!latestWeather || !latestWeather.time || !latestWeather.weathercode || !latestWeather.temperature_2m_max || !latestWeather.temperature_2m_min) return [];
+  
+  const forecastArray: DailyForecast[] | null = useMemo(() => {
+    if (!latestWeather || !latestWeather.forecast) return null;
     
-    return latestWeather.time.map((date, index) => ({
-        date,
-        weathercode: latestWeather.weathercode[index],
-        condition: getWeatherConditionFromCode(latestWeather.weathercode[index]),
-        temperature_max: latestWeather.temperature_2m_max[index],
-        temperature_min: latestWeather.temperature_2m_min[index],
-    }));
+    // The forecast is an object, not an array, so we need to convert it.
+    // It seems to be the format from your very first request.
+    if (typeof latestWeather.forecast === 'object' && !Array.isArray(latestWeather.forecast)) {
+       const forecastObj = latestWeather.forecast as any;
+       if(forecastObj.time && forecastObj.weathercode && forecastObj.temperature_2m_max && forecastObj.temperature_2m_min) {
+            return forecastObj.time.map((date: string, index: number) => ({
+                date,
+                weathercode: forecastObj.weathercode[index],
+                condition: getWeatherConditionFromCode(forecastObj.weathercode[index]),
+                temperature_max: forecastObj.temperature_2m_max[index],
+                temperature_min: forecastObj.temperature_2m_min[index],
+            }));
+       }
+    }
+    
+    // Handle if it's already an array
+    if (Array.isArray(latestWeather.forecast)) {
+      return latestWeather.forecast.map(day => ({...day, condition: getWeatherConditionFromCode(day.weathercode)}));
+    }
 
+    return null;
   }, [latestWeather]);
 
 
@@ -163,10 +170,10 @@ export function DashboardClient() {
                      <div className="flex items-center justify-center h-48 text-muted-foreground">
                         <p>Loading forecast...</p>
                     </div>
-                ) : forecastArray.length > 0 ? (
+                ) : forecastArray && forecastArray.length > 0 ? (
                     <ul className="space-y-4">
                         {forecastArray.map((day, index) => {
-                            const conditionIcon = weatherConditions[day.condition]?.icon || <Cloudy className="h-6 w-6 text-gray-400" />;
+                            const conditionIcon = weatherConditions[day.condition as keyof typeof weatherConditions]?.icon || <Cloudy className="h-6 w-6 text-gray-400" />;
                             return (
                                 <li key={index} className="flex items-center justify-between">
                                     <span className="font-semibold w-12">{getDayOfWeek(day.date)}</span>
