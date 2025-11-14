@@ -57,6 +57,12 @@ export function DashboardClient() {
     ? latestWeather.condition
     : 'Cloudy';
 
+  const forecastArray = useMemo(() => {
+    if (!latestWeather?.forecast) return [];
+    // Convert forecast object to array
+    return Object.values(latestWeather.forecast);
+  }, [latestWeather]);
+
 
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -135,9 +141,9 @@ export function DashboardClient() {
                      <div className="flex items-center justify-center h-48 text-muted-foreground">
                         <p>Loading forecast...</p>
                     </div>
-                ) : latestWeather && latestWeather.forecast ? (
+                ) : forecastArray.length > 0 ? (
                     <ul className="space-y-4">
-                        {latestWeather.forecast.map((day, index) => {
+                        {forecastArray.map((day, index) => {
                             const conditionIcon = weatherConditions[day.condition as keyof typeof weatherConditions]?.icon || <Cloudy className="h-6 w-6 text-gray-400" />;
                             return (
                                 <li key={index} className="flex items-center justify-between">
