@@ -1,7 +1,7 @@
 'use server';
 
 import { NextResponse } from 'next/server';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { initializeApp, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { z } from 'zod';
 
@@ -15,20 +15,9 @@ const alertSchema = z.object({
 
 // Initialize Firebase Admin SDK
 // This is a server-side operation, so we use the Admin SDK.
-// Make sure your service account credentials are set up in your environment.
+// It will automatically use Application Default Credentials in the App Hosting environment.
 if (!getApps().length) {
-  if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
-    initializeApp({
-      credential: cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY)),
-    });
-  } else {
-    // For local development without service account file,
-    // useful for environments where GOOGLE_APPLICATION_CREDENTIALS is set.
-    console.warn(
-      'FIREBASE_SERVICE_ACCOUNT_KEY not found. Using default credentials.'
-    );
-    initializeApp();
-  }
+  initializeApp();
 }
 
 const db = getFirestore();
