@@ -8,6 +8,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
 import {
   Bell,
@@ -18,11 +19,15 @@ import {
   Sun,
   Thermometer,
   Wind,
+  Trash2,
 } from "lucide-react";
-import { useDatabase, useMemoFirebase } from "@/firebase";
+import { useDatabase, useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebase";
 import { useRtdbValue } from "@/firebase/rtdb/use-rtdb-value";
 import { ref } from "firebase/database";
-import { WeatherData, WeatherCondition, DailyForecast } from "@/lib/types";
+import { WeatherData, WeatherCondition, DailyForecast, NotificationLog } from "@/lib/types";
+import { Button } from "@/components/ui/button";
+import { collection, writeBatch, getDocs, query } from "firebase/firestore";
+import { formatDistanceToNow } from 'date-fns';
 
 const weatherConditions: Record<string, { icon: JSX.Element, name: string }> = {
   Sunny: { icon: <Sun className="h-6 w-6 text-yellow-500" />, name: "Sunny" },
@@ -47,14 +52,22 @@ const getDayOfWeek = (dateString: string) => {
 
 export function DashboardClient() {
   const database = useDatabase();
+  const firestore = useFirestore();
+  const { user } = useUser();
   
   const weatherRef = useMemoFirebase(() => {
     if (!database) return null;
     return ref(database, 'weather');
   }, [database]);
+  
+  const notificationLogsRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return collection(firestore, `users/${user.uid}/notification_logs`);
+  }, [firestore, user]);
 
   const { data: weatherHistory, isLoading: isWeatherLoading } = useRtdbValue<{[key: string]: WeatherData}>(weatherRef);
-  
+  const { data: notificationLogs, isLoading: isNotificationsLoading } = useCollection<NotificationLog>(notificationLogsRef);
+
   const latestWeather = useMemo(() => {
     if (!weatherHistory) return null;
     const allEntries = Object.values(weatherHistory);
@@ -96,6 +109,17 @@ export function DashboardClient() {
     }
     return "";
   }, [latestWeather]);
+
+  const handleClearNotifications = async () => {
+    if (!firestore || !user || !notificationLogsRef) return;
+    const batch = writeBatch(firestore);
+    const q = query(notificationLogsRef);
+    const snapshot = await getDocs(q);
+    snapshot.docs.forEach(doc => {
+        batch.delete(doc.ref);
+    });
+    await batch.commit();
+  }
 
 
   return (
@@ -235,14 +259,46 @@ export function DashboardClient() {
                 <Bell className="h-6 w-6 text-primary" />
                 <span>Notification History</span>
             </CardTitle>
-            <CardDescription>Recent alerts</CardDescription>
+            <CardDescription>Recent alerts from your devices</CardDescription>
         </CardHeader>
         <CardContent>
-            <div className="flex items-center justify-center h-24 text-muted-foreground">
-                <p>No notifications yet.</p>
-            </div>
+            {isNotificationsLoading ? (
+                 <div className="flex items-center justify-center h-24 text-muted-foreground">
+                    <p>Loading notifications...</p>
+                </div>
+            ) : notificationLogs && notificationLogs.length > 0 ? (
+                <ul className="space-y-4">
+                    {notificationLogs.map((log) => (
+                        <li key={log.id} className="flex items-start gap-4">
+                            <div className="bg-primary/10 text-primary p-2 rounded-full">
+                                <Bell className="h-5 w-5" />
+                            </div>
+                            <div className="flex-1">
+                                <p className="font-medium">{log.message}</p>
+                                <p className="text-sm text-muted-foreground">
+                                    {formatDistanceToNow(new Date(log.timestamp), { addSuffix: true })}
+                                </p>
+                            </div>
+                        </li>
+                    ))}
+                </ul>
+            ) : (
+                <div className="flex items-center justify-center h-24 text-muted-foreground">
+                    <p>No notifications yet.</p>
+                </div>
+            )}
         </CardContent>
+        {notificationLogs && notificationLogs.length > 0 && (
+             <CardFooter>
+                <Button variant="outline" size="sm" onClick={handleClearNotifications}>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Clear All
+                </Button>
+            </CardFooter>
+        )}
       </Card>
     </div>
   );
 }
+
+    

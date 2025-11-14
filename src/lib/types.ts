@@ -19,5 +19,22 @@ export interface WeatherData {
     windspeed: number;
     condition: WeatherCondition;
   };
-  forecast: DailyForecast[];
+  forecast: {
+    time: string[];
+    weathercode: number[];
+    temperature_2m_max: number[];
+    temperature_2m_min: number[];
+  } | DailyForecast[]
 }
+
+
+export interface NotificationLog {
+    id: string;
+    userId: string;
+    umbrellaId?: string;
+    type: string;
+    message: string;
+    timestamp: string;
+}
+
+    
