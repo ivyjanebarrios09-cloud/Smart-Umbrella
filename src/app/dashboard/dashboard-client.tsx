@@ -104,7 +104,7 @@ export function DashboardClient() {
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                {isWeatherLoading ? <Cloudy className="h-6 w-6 text-gray-500" /> : displayCondition?.icon}
+                <Thermometer className="h-6 w-6 text-primary" />
                 <span>Temperature</span>
                 </CardTitle>
                 <CardDescription>
@@ -122,7 +122,7 @@ export function DashboardClient() {
                     <div className="flex flex-col items-center justify-center space-y-2">
                         <div className="text-6xl font-bold">{currentTemperature.toFixed(1)}°C</div>
                         <div className="flex items-center gap-2 text-muted-foreground">
-                            <Thermometer className="h-5 w-5" />
+                            {displayCondition?.icon}
                             <span>{displayCondition?.name}</span>
                         </div>
                     </div>
@@ -138,7 +138,7 @@ export function DashboardClient() {
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                    <Wind className="h-6 w-6" />
+                    <Wind className="h-6 w-6 text-primary" />
                     <span>Wind</span>
                 </CardTitle>
                  <CardDescription>Current wind speed</CardDescription>
@@ -165,7 +165,7 @@ export function DashboardClient() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <MapPin className="h-6 w-6" />
+              <MapPin className="h-6 w-6 text-primary" />
               <span>Last Known Location</span>
             </CardTitle>
             <CardDescription>GPS coordinates of the umbrella</CardDescription>
@@ -197,7 +197,7 @@ export function DashboardClient() {
         <Card className="lg:col-span-2">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                    <Calendar className="h-6 w-6" />
+                    <Calendar className="h-6 w-6 text-primary" />
                     <span>7-Day Forecast</span>
                 </CardTitle>
                 <CardDescription>Upcoming weather at a glance</CardDescription>
@@ -232,7 +232,7 @@ export function DashboardClient() {
       <Card className="lg:col-span-3">
         <CardHeader>
             <CardTitle className="flex items-center gap-2">
-                <Bell className="h-6 w-6" />
+                <Bell className="h-6 w-6 text-primary" />
                 <span>Notification History</span>
             </CardTitle>
             <CardDescription>Recent alerts</CardDescription>
