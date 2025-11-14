@@ -17,7 +17,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -30,17 +29,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { collection } from 'firebase/firestore';
 import type { Umbrella } from '@/lib/types';
 
 const alertFormSchema = z.object({
   umbrellaId: z.string().min(1, 'Please select an umbrella.'),
-  message: z
-    .string()
-    .min(1, 'Message cannot be empty.')
-    .max(100, 'Message must not be longer than 100 characters.'),
 });
 
 type AlertFormValues = z.infer<typeof alertFormSchema>;
@@ -61,7 +55,6 @@ export default function UmbrellaAlertPage() {
     resolver: zodResolver(alertFormSchema),
     defaultValues: {
       umbrellaId: '',
-      message: 'I think I left my umbrella behind!',
     },
     mode: 'onChange',
   });
@@ -78,8 +71,8 @@ export default function UmbrellaAlertPage() {
         body: JSON.stringify({
           userId: user.uid,
           umbrellaId: data.umbrellaId,
-          message: data.message,
-          type: 'custom',
+          message: 'I think I left my umbrella behind!',
+          type: 'left_behind',
         }),
       });
 
@@ -89,7 +82,7 @@ export default function UmbrellaAlertPage() {
 
       toast({
         title: 'Alert Sent!',
-        description: 'Your custom notification has been logged.',
+        description: 'Your "left-behind" notification has been logged.',
       });
       form.reset();
     } catch (error) {
@@ -122,9 +115,9 @@ export default function UmbrellaAlertPage() {
         </Link>
         <Card>
           <CardHeader>
-            <CardTitle>Send Umbrella Alert</CardTitle>
+            <CardTitle>Umbrella Alert</CardTitle>
             <CardDescription>
-              Send a custom notification for one of your umbrellas.
+              Select an umbrella to report it as missing. This will log a "left-behind" alert in your notification history.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -135,14 +128,14 @@ export default function UmbrellaAlertPage() {
                   name="umbrellaId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Umbrella</FormLabel>
+                      <FormLabel>Select Umbrella</FormLabel>
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select an umbrella" />
+                            <SelectValue placeholder="Select the missing umbrella" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -163,29 +156,9 @@ export default function UmbrellaAlertPage() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="message"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Message</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Enter your alert message..."
-                          className="resize-none"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        This message will be logged in your notification history.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
                 <Button type="submit" disabled={!umbrellas || umbrellas.length === 0}>
                   <Send className="mr-2 h-4 w-4" />
-                  Send Alert
+                  Send Missing Alert
                 </Button>
               </form>
             </Form>
