@@ -37,4 +37,8 @@ export interface NotificationLog {
     timestamp: string;
 }
 
+export interface Umbrella {
+  id: string;
+  name: string;
+}
     
