@@ -19,25 +19,20 @@ import {
 } from "lucide-react";
 import { useDatabase, useMemoFirebase, useRtdbValue } from "@/firebase";
 import { ref } from "firebase/database";
-import { WeatherData, WeatherCondition } from "@/lib/types";
+import { WeatherData, WeatherCondition, ForecastData } from "@/lib/types";
 
 
 const weatherConditions = {
   Sunny: { icon: <Sun className="h-6 w-6 text-yellow-500" />, name: "Sunny" },
   Rainy: { icon: <CloudRain className="h-6 w-6 text-blue-500" />, name: "Rainy" },
   Cloudy: { icon: <Cloudy className="h-6 w-6 text-gray-500" />, name: "Cloudy" },
+  "Partly cloudy": { icon: <Cloudy className="h-6 w-6 text-gray-400" />, name: "Partly cloudy" },
 };
 
-const mockForecast = [
-    { day: 'Mon', icon: <Sun className="h-6 w-6 text-yellow-500" />, high: 28, low: 18 },
-    { day: 'Tue', icon: <Cloudy className="h-6 w-6 text-gray-400" />, high: 26, low: 17 },
-    { day: 'Wed', icon: <CloudRain className="h-6 w-6 text-blue-500" />, high: 24, low: 16 },
-    { day: 'Thu', icon: <Sun className="h-6 w-6 text-yellow-500" />, high: 29, low: 19 },
-    { day: 'Fri', icon: <Cloudy className="h-6 w-6 text-gray-400" />, high: 27, low: 18 },
-    { day: 'Sat', icon: <Sun className="h-6 w-6 text-yellow-500" />, high: 30, low: 20 },
-    { day: 'Sun', icon: <CloudRain className="h-6 w-6 text-blue-500" />, high: 25, low: 17 },
-];
-
+const getDayOfWeek = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { weekday: 'short' });
+}
 
 export function DashboardClient() {
   const database = useDatabase();
@@ -53,13 +48,12 @@ export function DashboardClient() {
     if (!weatherHistory) return null;
     const allEntries = Object.values(weatherHistory);
     if (allEntries.length === 0) return null;
-    // Assuming the last entry is the latest one.
     // A more robust solution might use timestamps if available.
     return allEntries.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))[0];
   }, [weatherHistory]);
 
 
-  const displayCondition = latestWeather?.condition && weatherConditions[latestWeather.condition]
+  const displayCondition = latestWeather?.condition && weatherConditions[latestWeather.condition as keyof typeof weatherConditions]
     ? latestWeather.condition
     : 'Cloudy';
 
@@ -70,7 +64,7 @@ export function DashboardClient() {
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                {isWeatherLoading ? <Cloudy className="h-6 w-6 text-gray-500" /> : weatherConditions[displayCondition].icon}
+                {isWeatherLoading ? <Cloudy className="h-6 w-6 text-gray-500" /> : weatherConditions[displayCondition as keyof typeof weatherConditions].icon}
                 <span>Temperature</span>
                 </CardTitle>
                 <CardDescription>
@@ -89,7 +83,7 @@ export function DashboardClient() {
                         <div className="text-6xl font-bold">{latestWeather.temperature?.toFixed(1)}°C</div>
                         <div className="flex items-center gap-2 text-muted-foreground">
                             <Thermometer className="h-5 w-5" />
-                            <span>{weatherConditions[displayCondition].name}</span>
+                            <span>{weatherConditions[displayCondition as keyof typeof weatherConditions].name}</span>
                         </div>
                     </div>
                 ) : (
@@ -137,15 +131,28 @@ export function DashboardClient() {
                 <CardDescription>Upcoming weather at a glance</CardDescription>
             </CardHeader>
             <CardContent>
-                <ul className="space-y-4">
-                    {mockForecast.map((day, index) => (
-                        <li key={index} className="flex items-center justify-between">
-                            <span className="font-semibold w-12">{day.day}</span>
-                            <span className="flex-shrink-0">{day.icon}</span>
-                            <span className="w-20 text-right text-muted-foreground">{day.high}° / {day.low}°</span>
-                        </li>
-                    ))}
-                </ul>
+                {isWeatherLoading ? (
+                     <div className="flex items-center justify-center h-48 text-muted-foreground">
+                        <p>Loading forecast...</p>
+                    </div>
+                ) : latestWeather && latestWeather.forecast ? (
+                    <ul className="space-y-4">
+                        {latestWeather.forecast.map((day, index) => {
+                            const conditionIcon = weatherConditions[day.condition as keyof typeof weatherConditions]?.icon || <Cloudy className="h-6 w-6 text-gray-400" />;
+                            return (
+                                <li key={index} className="flex items-center justify-between">
+                                    <span className="font-semibold w-12">{getDayOfWeek(day.date)}</span>
+                                    <span className="flex-shrink-0">{conditionIcon}</span>
+                                    <span className="w-20 text-right text-muted-foreground">{day.temperature_max}° / {day.temperature_min}°</span>
+                                </li>
+                            )
+                        })}
+                    </ul>
+                ) : (
+                    <div className="flex items-center justify-center h-48 text-muted-foreground">
+                        <p>No forecast data available.</p>
+                    </div>
+                )}
             </CardContent>
         </Card>
 
