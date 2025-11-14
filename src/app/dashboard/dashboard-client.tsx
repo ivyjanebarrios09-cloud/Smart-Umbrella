@@ -20,15 +20,24 @@ import {
 } from "lucide-react";
 import { useDatabase, useMemoFirebase, useRtdbValue } from "@/firebase";
 import { ref } from "firebase/database";
-import { WeatherData } from "@/lib/types";
+import { WeatherData, WeatherCondition, DailyForecast } from "@/lib/types";
 
 
-const weatherConditions = {
+const weatherConditions: Record<WeatherCondition, { icon: JSX.Element, name: string }> = {
   Sunny: { icon: <Sun className="h-6 w-6 text-yellow-500" />, name: "Sunny" },
   Rainy: { icon: <CloudRain className="h-6 w-6 text-blue-500" />, name: "Rainy" },
   Cloudy: { icon: <Cloudy className="h-6 w-6 text-gray-500" />, name: "Cloudy" },
   "Partly cloudy": { icon: <Cloudy className="h-6 w-6 text-gray-400" />, name: "Partly cloudy" },
 };
+
+const getWeatherConditionFromCode = (code: number): WeatherCondition => {
+    if (code <= 1) return "Sunny";
+    if (code === 2) return "Partly cloudy";
+    if (code === 3) return "Cloudy";
+    if (code >= 51) return "Rainy";
+    return "Cloudy";
+}
+
 
 const getDayOfWeek = (dateString: string) => {
     const date = new Date(dateString);
@@ -49,19 +58,27 @@ export function DashboardClient() {
     if (!weatherHistory) return null;
     const allEntries = Object.values(weatherHistory);
     if (allEntries.length === 0) return null;
-    // A more robust solution might use timestamps if available.
-    return allEntries.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))[0];
+    return allEntries.sort((a, b) => (b.timestamp_ms || 0) - (a.timestamp_ms || 0))[0];
   }, [weatherHistory]);
 
+  const currentTemperature = latestWeather?.temperature_2m_max?.[0];
+  const currentWindspeed = latestWeather?.windspeed_10m_max?.[0];
+  const currentConditionCode = latestWeather?.weathercode?.[0];
+  const currentCondition = currentConditionCode !== undefined ? getWeatherConditionFromCode(currentConditionCode) : "Cloudy";
 
-  const displayCondition = latestWeather?.condition && weatherConditions[latestWeather.condition as keyof typeof weatherConditions]
-    ? latestWeather.condition
-    : 'Cloudy';
+  const displayCondition = weatherConditions[currentCondition];
 
-  const forecastArray = useMemo(() => {
-    if (!latestWeather?.forecast) return [];
-    // Convert forecast object to array
-    return Object.values(latestWeather.forecast);
+  const forecastArray: DailyForecast[] = useMemo(() => {
+    if (!latestWeather || !latestWeather.time) return [];
+    
+    return latestWeather.time.map((date, index) => ({
+        date,
+        weathercode: latestWeather.weathercode[index],
+        condition: getWeatherConditionFromCode(latestWeather.weathercode[index]),
+        temperature_max: latestWeather.temperature_2m_max[index],
+        temperature_min: latestWeather.temperature_2m_min[index],
+    }));
+
   }, [latestWeather]);
 
 
@@ -71,13 +88,13 @@ export function DashboardClient() {
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                {isWeatherLoading ? <Cloudy className="h-6 w-6 text-gray-500" /> : weatherConditions[displayCondition as keyof typeof weatherConditions].icon}
+                {isWeatherLoading ? <Cloudy className="h-6 w-6 text-gray-500" /> : displayCondition.icon}
                 <span>Temperature</span>
                 </CardTitle>
                 <CardDescription>
                     {isWeatherLoading
                         ? 'Loading location...'
-                        : latestWeather?.location || 'Unknown Location'}
+                        : latestWeather?.location_str || 'Unknown Location'}
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -85,12 +102,12 @@ export function DashboardClient() {
                     <div className="flex items-center justify-center h-24 text-muted-foreground">
                         <p>Loading...</p>
                     </div>
-                ) : latestWeather ? (
+                ) : currentTemperature !== undefined ? (
                     <div className="flex flex-col items-center justify-center space-y-2">
-                        <div className="text-6xl font-bold">{latestWeather.temperature?.toFixed(1)}°C</div>
+                        <div className="text-6xl font-bold">{currentTemperature.toFixed(1)}°C</div>
                         <div className="flex items-center gap-2 text-muted-foreground">
                             <Thermometer className="h-5 w-5" />
-                            <span>{weatherConditions[displayCondition as keyof typeof weatherConditions].name}</span>
+                            <span>{displayCondition.name}</span>
                         </div>
                     </div>
                 ) : (
@@ -115,9 +132,9 @@ export function DashboardClient() {
                     <div className="flex items-center justify-center h-24 text-muted-foreground">
                         <p>Loading...</p>
                     </div>
-                ) : latestWeather ? (
+                ) : currentWindspeed !== undefined ? (
                      <div className="flex flex-col items-center justify-center space-y-2">
-                        <div className="text-6xl font-bold">{latestWeather.windspeed?.toFixed(1)}</div>
+                        <div className="text-6xl font-bold">{currentWindspeed.toFixed(1)}</div>
                         <div className="text-sm text-muted-foreground">km/h</div>
                     </div>
                 ) : (
@@ -145,12 +162,12 @@ export function DashboardClient() {
                 ) : forecastArray.length > 0 ? (
                     <ul className="space-y-4">
                         {forecastArray.map((day, index) => {
-                            const conditionIcon = weatherConditions[day.condition as keyof typeof weatherConditions]?.icon || <Cloudy className="h-6 w-6 text-gray-400" />;
+                            const conditionIcon = weatherConditions[day.condition]?.icon || <Cloudy className="h-6 w-6 text-gray-400" />;
                             return (
                                 <li key={index} className="flex items-center justify-between">
                                     <span className="font-semibold w-12">{getDayOfWeek(day.date)}</span>
                                     <span className="flex-shrink-0">{conditionIcon}</span>
-                                    <span className="w-20 text-right text-muted-foreground">{day.temperature_max}° / {day.temperature_min}°</span>
+                                    <span className="w-20 text-right text-muted-foreground">{day.temperature_max.toFixed(0)}° / {day.temperature_min.toFixed(0)}°</span>
                                 </li>
                             )
                         })}
