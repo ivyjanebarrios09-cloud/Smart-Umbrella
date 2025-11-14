@@ -24,9 +24,29 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { collection, addDoc } from 'firebase/firestore';
 import type { Umbrella } from '@/lib/types';
 import { Input } from "@/components/ui/input";
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { toast } from '@/hooks/use-toast';
+import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+
+const newUmbrellaFormSchema = z.object({
+  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+});
+
+type NewUmbrellaFormValues = z.infer<typeof newUmbrellaFormSchema>;
+
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
@@ -44,6 +64,42 @@ export default function SettingsPage() {
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
   };
+  
+  const form = useForm<NewUmbrellaFormValues>({
+    resolver: zodResolver(newUmbrellaFormSchema),
+    defaultValues: {
+      name: '',
+    },
+  });
+
+  async function onSubmit(data: NewUmbrellaFormValues) {
+    if (!user || !umbrellasRef) return;
+
+    try {
+      addDocumentNonBlocking(umbrellasRef, {
+        name: data.name,
+        userId: user.uid,
+        bleDeviceId: '', // Default value
+        ledEnabled: false, // Default value
+        leftBehindNotificationEnabled: true, // Default value
+        leftBehindDistance: 10, // Default value in meters
+      });
+
+      toast({
+        title: "Umbrella Registered",
+        description: `"${data.name}" has been added.`,
+      });
+      form.reset();
+    } catch (error) {
+      console.error("Error registering new umbrella:", error);
+      toast({
+        variant: "destructive",
+        title: "Registration Failed",
+        description: "Could not register the new umbrella.",
+      });
+    }
+  }
+
 
   return (
     <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
@@ -108,6 +164,35 @@ export default function SettingsPage() {
                   />
                 </div>
               </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Register New Umbrella</CardTitle>
+              <CardDescription>
+                Give your new umbrella a name to register it to your account.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Umbrella Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., My Blue Umbrella" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit">Register Umbrella</Button>
+                </form>
+              </Form>
             </CardContent>
           </Card>
 
