@@ -73,14 +73,10 @@ export function DashboardClient() {
     const allEntries = Object.values(weatherHistory);
     if (allEntries.length === 0) return null;
 
-    // Find the entry with the most recent timestamp
-    return allEntries.reduce((latest, entry) => {
-      if (!latest) return entry;
-      return (entry.timestamp_ms || 0) > (latest.timestamp_ms || 0)
-        ? entry
-        : latest;
-    }, null as WeatherData | null);
+    // Sort entries by timestamp in descending order and return the first one.
+    return allEntries.sort((a, b) => (b.timestamp_ms || 0) - (a.timestamp_ms || 0))[0];
   }, [weatherHistory]);
+
 
   const currentTemperature = latestWeather?.current?.temperature;
   const currentWindspeed = latestWeather?.current?.windspeed;
