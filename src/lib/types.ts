@@ -1,3 +1,4 @@
+import { Timestamp } from 'firebase/firestore';
 
 export type WeatherCondition = "Sunny" | "Rainy" | "Cloudy" | "Partly cloudy";
 
@@ -29,4 +30,13 @@ export interface WeatherData {
     condition: WeatherCondition;
   };
   forecast?: DailyForecast[] | RawForecastObject;
+}
+
+export interface NotificationLog {
+    id: string;
+    userId: string;
+    umbrellaId?: string;
+    type: 'left_behind' | 'weather_alert' | string;
+    message: string;
+    timestamp: Timestamp;
 }
