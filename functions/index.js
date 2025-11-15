@@ -1,34 +1,31 @@
-const functions = require("firebase-functions");
-const admin = require("firebase-admin");
+const functions = require('firebase-functions');
+const { db, messaging } = require('./firebaseAdmin');
 
-admin.initializeApp();
+exports.umbrellaAlert = functions.https.onRequest(async (req, res) => {
+  try {
+    const { userId, message } = req.body;
 
-// This triggers when umbrella_status changes in Realtime Database
-exports.sendUmbrellaAlert = functions.database
-  .ref("/umbrella/status")
-  .onUpdate(async (change, context) => {
-    const newStatus = change.after.val();
-
-    // Only send notification if umbrella is missing
-    if (newStatus !== "missing") return null;
-
-    console.log("Umbrella missing! Sending push notification...");
-
-    // Retrieve saved tokens
-    const tokensSnap = await admin.database().ref("/tokens").once("value");
-    if (!tokensSnap.exists()) {
-      console.log("No tokens saved");
-      return null;
+    if (!userId || !message) {
+      return res.status(400).send({ error: 'Missing userId or message' });
     }
 
-    const tokens = Object.values(tokensSnap.val());
+    await db.collection('alerts').add({
+      userId,
+      message,
+      timestamp: new Date(),
+    });
 
-    const payload = {
+    await messaging.send({
+      token: "<USER_FCM_TOKEN>", // replace with user's FCM token
       notification: {
         title: "Umbrella Alert!",
-        body: "Your umbrella was left behind!",
+        body: message,
       },
-    };
+    });
 
-    return admin.messaging().sendToDevice(tokens, payload);
-  });
+    res.status(200).send({ success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ success: false, error: error.message });
+  }
+});
