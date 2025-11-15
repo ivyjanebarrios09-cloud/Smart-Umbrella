@@ -18,7 +18,7 @@ import {
   Thermometer,
   Wind,
 } from "lucide-react";
-import { useDatabase, useFirestore, useUser, useMemoFirebase } from "@/firebase";
+import { useDatabase, useMemoFirebase } from "@/firebase";
 import { useRtdbValue } from "@/firebase/rtdb/use-rtdb-value";
 import { ref } from "firebase/database";
 import { WeatherData, WeatherCondition, DailyForecast } from "@/lib/types";
@@ -58,7 +58,10 @@ export function DashboardClient() {
     if (!weatherHistory) return null;
     const allEntries = Object.values(weatherHistory);
     if (allEntries.length === 0) return null;
-    return allEntries.sort((a, b) => (b.timestamp_ms || 0) - (a.timestamp_ms || 0))[0];
+    // Find the entry with the most recent timestamp
+    return allEntries.reduce((latest, current) => {
+      return (current.timestamp_ms || 0) > (latest.timestamp_ms || 0) ? current : latest;
+    });
   }, [weatherHistory]);
 
   const currentTemperature = latestWeather?.current?.temperature;
@@ -69,21 +72,17 @@ export function DashboardClient() {
   const forecastArray: DailyForecast[] | null = useMemo(() => {
     if (!latestWeather || !latestWeather.forecast) return null;
     
-    if (typeof latestWeather.forecast === 'object' && !Array.isArray(latestWeather.forecast)) {
-       const forecastObj = latestWeather.forecast as any;
-       if(forecastObj.time && forecastObj.weathercode && forecastObj.temperature_2m_max && forecastObj.temperature_2m_min) {
-            return forecastObj.time.map((date: string, index: number) => ({
-                date,
-                weathercode: forecastObj.weathercode[index],
-                condition: getWeatherConditionFromCode(forecastObj.weathercode[index]),
-                temperature_max: forecastObj.temperature_2m_max[index],
-                temperature_min: forecastObj.temperature_2m_min[index],
-            }));
-       }
-    }
+    // The data comes as an object of arrays, transform it into an array of objects
+    const { time, weathercode, temperature_2m_max, temperature_2m_min } = latestWeather.forecast as any;
     
-    if (Array.isArray(latestWeather.forecast)) {
-      return latestWeather.forecast.map(day => ({...day, condition: getWeatherConditionFromCode(day.weathercode)}));
+    if (time && weathercode && temperature_2m_max && temperature_2m_min) {
+        return time.map((date: string, index: number) => ({
+            date,
+            weathercode: weathercode[index],
+            condition: getWeatherConditionFromCode(weathercode[index]),
+            temperature_max: temperature_2m_max[index],
+            temperature_min: temperature_2m_min[index],
+        }));
     }
 
     return null;
@@ -229,5 +228,3 @@ export function DashboardClient() {
     </div>
   );
 }
-
-    
