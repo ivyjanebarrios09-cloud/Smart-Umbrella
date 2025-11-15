@@ -9,15 +9,24 @@ export interface DailyForecast {
   weathercode: number;
 }
 
+// This type represents the structure of the `forecast` field when it's an object of arrays
+export interface RawForecastObject {
+    time: string[];
+    weathercode: number[];
+    temperature_2m_max: number[];
+    temperature_2m_min: number[];
+}
+
 export interface WeatherData {
   latitude: number;
   longitude: number;
   location_str: string;
   timestamp_ms: number;
-  current: {
+  time_str?: string;
+  current?: {
     temperature: number;
     windspeed: number;
     condition: WeatherCondition;
   };
-  forecast: DailyForecast[];
+  forecast?: DailyForecast[] | RawForecastObject;
 }
