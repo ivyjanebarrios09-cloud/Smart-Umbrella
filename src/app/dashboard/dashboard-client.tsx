@@ -58,6 +58,7 @@ export function DashboardClient() {
     if (!weatherHistory) return null;
     const allEntries = Object.values(weatherHistory);
     if (allEntries.length === 0) return null;
+    // Find the entry with the highest timestamp
     return allEntries.reduce((latest, current) => {
       const latestTime = latest?.timestamp_ms ?? 0;
       const currentTime = current?.timestamp_ms ?? 0;
@@ -71,7 +72,7 @@ export function DashboardClient() {
   const displayCondition = weatherConditions[currentConditionName];
   
   const forecastArray: DailyForecast[] | null = useMemo(() => {
-    if (!latestWeather || !latestWeather.forecast || !('time' in latestWeather.forecast)) return null;
+    if (!latestWeather || !latestWeather.forecast) return null;
     
     const { time, weathercode, temperature_2m_max, temperature_2m_min } = latestWeather.forecast;
     

@@ -24,7 +24,7 @@ export interface WeatherData {
     weathercode: number[];
     temperature_2m_max: number[];
     temperature_2m_min: number[];
-  } | DailyForecast[]
+  };
 }
 
 
@@ -41,3 +41,4 @@ export interface NotificationLog {
   message: string;
   timestamp: string;
 }
+
