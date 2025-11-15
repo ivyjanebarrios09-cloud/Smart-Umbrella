@@ -58,10 +58,11 @@ export function DashboardClient() {
     if (!weatherHistory) return null;
     const allEntries = Object.values(weatherHistory);
     if (allEntries.length === 0) return null;
-    // Find the entry with the most recent timestamp
     return allEntries.reduce((latest, current) => {
-      return (current.timestamp_ms || 0) > (latest.timestamp_ms || 0) ? current : latest;
-    });
+      const latestTime = latest?.timestamp_ms ?? 0;
+      const currentTime = current?.timestamp_ms ?? 0;
+      return currentTime > latestTime ? current : latest;
+    }, allEntries[0]);
   }, [weatherHistory]);
 
   const currentTemperature = latestWeather?.current?.temperature;
@@ -70,10 +71,9 @@ export function DashboardClient() {
   const displayCondition = weatherConditions[currentConditionName];
   
   const forecastArray: DailyForecast[] | null = useMemo(() => {
-    if (!latestWeather || !latestWeather.forecast) return null;
+    if (!latestWeather || !latestWeather.forecast || !('time' in latestWeather.forecast)) return null;
     
-    // The data comes as an object of arrays, transform it into an array of objects
-    const { time, weathercode, temperature_2m_max, temperature_2m_min } = latestWeather.forecast as any;
+    const { time, weathercode, temperature_2m_max, temperature_2m_min } = latestWeather.forecast;
     
     if (time && weathercode && temperature_2m_max && temperature_2m_min) {
         return time.map((date: string, index: number) => ({
