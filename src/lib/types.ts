@@ -14,13 +14,13 @@ export interface WeatherData {
   longitude: number;
   location_str: string;
   timestamp_ms: number;
-  current: {
+  current?: {
     temperature: number;
     windspeed: number;
     condition: WeatherCondition;
     weathercode: number;
   };
-  forecast: {
+  forecast?: {
     time: string[];
     weathercode: number[];
     temperature_2m_max: number[];

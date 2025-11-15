@@ -23,7 +23,7 @@ import { useRtdbValue } from "@/firebase/rtdb/use-rtdb-value";
 import { ref } from "firebase/database";
 import { WeatherData, WeatherCondition, DailyForecast } from "@/lib/types";
 
-const weatherConditions: Record<string, { icon: JSX.Element, name: string }> = {
+const weatherConditions: Record<WeatherCondition, { icon: JSX.Element, name: string }> = {
   Sunny: { icon: <Sun className="h-6 w-6 text-yellow-500" />, name: "Sunny" },
   Rain: { icon: <CloudRain className="h-6 w-6 text-blue-500" />, name: "Rainy" },
   Cloudy: { icon: <Cloudy className="h-6 w-6 text-gray-500" />, name: "Cloudy" },
