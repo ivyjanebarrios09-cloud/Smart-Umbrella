@@ -1,5 +1,5 @@
 
-export type WeatherCondition = "Sunny" | "Rainy" | "Cloudy" | "Partly cloudy";
+export type WeatherCondition = "Sunny" | "Rain" | "Cloudy" | "Partly cloudy";
 
 export interface DailyForecast {
   date: string;
@@ -18,6 +18,7 @@ export interface WeatherData {
     temperature: number;
     windspeed: number;
     condition: WeatherCondition;
+    weathercode: number;
   };
   forecast: {
     time: string[];
@@ -41,4 +42,3 @@ export interface NotificationLog {
   message: string;
   timestamp: string;
 }
-

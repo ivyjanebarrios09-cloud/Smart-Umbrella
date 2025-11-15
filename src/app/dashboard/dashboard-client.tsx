@@ -25,7 +25,7 @@ import { WeatherData, WeatherCondition, DailyForecast } from "@/lib/types";
 
 const weatherConditions: Record<string, { icon: JSX.Element, name: string }> = {
   Sunny: { icon: <Sun className="h-6 w-6 text-yellow-500" />, name: "Sunny" },
-  Rainy: { icon: <CloudRain className="h-6 w-6 text-blue-500" />, name: "Rainy" },
+  Rain: { icon: <CloudRain className="h-6 w-6 text-blue-500" />, name: "Rainy" },
   Cloudy: { icon: <Cloudy className="h-6 w-6 text-gray-500" />, name: "Cloudy" },
   "Partly cloudy": { icon: <Cloudy className="h-6 w-6 text-gray-400" />, name: "Partly cloudy" },
 };
@@ -34,8 +34,8 @@ const getWeatherConditionFromCode = (code: number): WeatherCondition => {
     if (code <= 1) return "Sunny";
     if (code === 2) return "Partly cloudy";
     if (code === 3) return "Cloudy";
-    if (code >= 51 && code <= 67) return "Rainy"; 
-    if (code >= 80 && code <= 82) return "Rainy";
+    if (code >= 51 && code <= 67) return "Rain"; 
+    if (code >= 80 && code <= 82) return "Rain";
     return "Cloudy";
 }
 
@@ -58,18 +58,20 @@ export function DashboardClient() {
     if (!weatherHistory) return null;
     const allEntries = Object.values(weatherHistory);
     if (allEntries.length === 0) return null;
+    
     // Find the entry with the highest timestamp
     return allEntries.reduce((latest, current) => {
       const latestTime = latest?.timestamp_ms ?? 0;
       const currentTime = current?.timestamp_ms ?? 0;
       return currentTime > latestTime ? current : latest;
-    }, allEntries[0]);
+    });
   }, [weatherHistory]);
 
   const currentTemperature = latestWeather?.current?.temperature;
   const currentWindspeed = latestWeather?.current?.windspeed;
-  const currentConditionName = latestWeather?.current?.condition || "Cloudy";
-  const displayCondition = weatherConditions[currentConditionName];
+  const currentConditionName = latestWeather?.current?.condition;
+  
+  const displayCondition = currentConditionName ? weatherConditions[currentConditionName] : weatherConditions["Cloudy"];
   
   const forecastArray: DailyForecast[] | null = useMemo(() => {
     if (!latestWeather || !latestWeather.forecast) return null;
