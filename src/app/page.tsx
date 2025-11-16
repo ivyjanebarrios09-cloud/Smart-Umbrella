@@ -4,14 +4,10 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Logo } from '@/components/icons/logo';
 import { useUser } from '@/firebase';
 
 export default function LandingPage() {
-  const heroImage = PlaceHolderImages.find(
-    (img) => img.id === 'umbra-guard-hero'
-  );
   const { user, isUserLoading } = useUser();
 
   return (
@@ -44,16 +40,13 @@ export default function LandingPage() {
       </header>
       <main className="flex-grow">
         <section className="relative h-[60vh] min-h-[500px] w-full">
-          {heroImage && (
-            <Image
-              src={heroImage.imageUrl}
-              alt={heroImage.description}
-              data-ai-hint={heroImage.imageHint}
-              fill
-              className="object-cover"
-              priority
-            />
-          )}
+          <Image
+            src="/image/hero.jpg"
+            alt="A person holding a smart umbrella in the rain, with a city background."
+            fill
+            className="object-cover"
+            priority
+          />
           <div className="absolute inset-0 bg-black/50" />
           <div className="relative z-10 flex h-full flex-col items-center justify-center text-center text-white">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
