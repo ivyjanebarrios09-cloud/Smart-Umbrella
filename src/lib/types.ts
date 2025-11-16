@@ -1,6 +1,6 @@
 import { Timestamp } from 'firebase/firestore';
 
-export type WeatherCondition = "Sunny" | "Rainy" | "Cloudy" | "Partly cloudy";
+export type WeatherCondition = "Sunny" | "Rain" | "Cloudy" | "Partly cloudy";
 
 export interface DailyForecast {
   date: string;
@@ -23,12 +23,23 @@ export interface WeatherData {
   longitude: number;
   location_str: string;
   timestamp_ms: number;
+<<<<<<< HEAD
   time_str?: string;
+=======
+>>>>>>> origin/main
   current?: {
     temperature: number;
     windspeed: number;
     condition: WeatherCondition;
+    weathercode: number;
   };
+  forecast?: {
+    time: string[];
+    weathercode: number[];
+    temperature_2m_max: number[];
+    temperature_2m_min: number[];
+  };
+<<<<<<< HEAD
   forecast_daily_raw?: string; // Changed from forecast
 }
 
@@ -39,4 +50,21 @@ export interface NotificationLog {
     type: 'left_behind' | 'weather_alert' | string;
     message: string;
     timestamp: Timestamp;
+=======
+}
+
+
+export interface Umbrella {
+  id: string;
+  name: string;
+}
+    
+export interface NotificationLog {
+  id: string;
+  userId: string;
+  umbrellaId: string;
+  type: string;
+  message: string;
+  timestamp: string;
+>>>>>>> origin/main
 }

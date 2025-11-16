@@ -1,8 +1,14 @@
 'use client';
 
+<<<<<<< HEAD
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Bell } from 'lucide-react';
+=======
+import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
+import { collection, orderBy, query } from 'firebase/firestore';
+import type { NotificationLog } from '@/lib/types';
+>>>>>>> origin/main
 import {
   Card,
   CardContent,
@@ -10,6 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+<<<<<<< HEAD
 import {
   useCollection,
   useFirestore,
@@ -40,6 +47,38 @@ export default function NotificationHistoryPage() {
       console.error('Error fetching notifications:', error);
     }
   }, [error]);
+=======
+import { ArrowLeft, Bell, History } from 'lucide-react';
+import Link from 'next/link';
+import { formatDistanceToNow } from 'date-fns';
+import { ScrollArea } from '@/components/ui/scroll-area';
+
+export default function NotificationHistoryPage() {
+  const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
+
+  const notificationsRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(
+      collection(firestore, `users/${user.uid}/notification_logs`),
+      orderBy('timestamp', 'desc')
+    );
+  }, [firestore, user]);
+
+  const { data: notifications, isLoading: areNotificationsLoading } =
+    useCollection<NotificationLog>(notificationsRef);
+
+  const getIconForType = (type: string) => {
+    switch (type) {
+      case 'left_behind':
+        return <Bell className="h-5 w-5 text-destructive" />;
+      case 'weather_alert':
+        return <Bell className="h-5 w-5 text-blue-500" />;
+      default:
+        return <Bell className="h-5 w-5 text-muted-foreground" />;
+    }
+  };
+>>>>>>> origin/main
 
   return (
     <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
@@ -54,6 +93,7 @@ export default function NotificationHistoryPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
+<<<<<<< HEAD
               <Bell className="h-6 w-6" />
               <span>Notification History</span>
             </CardTitle>
@@ -98,6 +138,46 @@ export default function NotificationHistoryPage() {
                   ))}
               </ul>
             )}
+=======
+              <History className="h-6 w-6 text-primary" />
+              Notification History
+            </CardTitle>
+            <CardDescription>
+              Here are all the alerts and notifications you've received.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="h-[60vh]">
+              {isUserLoading || areNotificationsLoading ? (
+                <p>Loading notifications...</p>
+              ) : notifications && notifications.length > 0 ? (
+                <ul className="space-y-4">
+                  {notifications.map((log) => (
+                    <li
+                      key={log.id}
+                      className="flex items-start gap-4 rounded-lg border p-4"
+                    >
+                      <div className="mt-1">{getIconForType(log.type)}</div>
+                      <div className="flex-1">
+                        <p className="font-medium">{log.message}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {formatDistanceToNow(new Date(log.timestamp), {
+                            addSuffix: true,
+                          })}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12 text-center">
+                  <p className="text-muted-foreground">
+                    You have no notifications yet.
+                  </p>
+                </div>
+              )}
+            </ScrollArea>
+>>>>>>> origin/main
           </CardContent>
         </Card>
       </div>
