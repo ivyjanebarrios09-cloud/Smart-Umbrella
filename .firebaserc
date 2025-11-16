@@ -1,5 +1,7 @@
 {
   "projects": {
-    "default": "studio-2370514225-ff786"
-  }
+    "default": "studio-2370514225-ff786",
+    "smart umbrella": "smart-umbrella-2ee56"
+  },
+  "targets": {}
 }

@@ -18,6 +18,10 @@
         "name": {
           "type": "string",
           "description": "The user's display name."
+        },
+        "fcmToken": {
+          "type": "string",
+          "description": "The Firebase Cloud Messaging token for push notifications."
         }
       },
       "required": [

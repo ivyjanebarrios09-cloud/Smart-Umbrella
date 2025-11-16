@@ -1,0 +1,15 @@
+cat > package.json <<EOL
+{
+  "name": "functions",
+  "version": "1.0.0",
+  "description": "Umbrella alert system functions (v1, Spark-compatible)",
+  "main": "index.js",
+  "engines": {
+    "node": "18"
+  },
+  "dependencies": {
+    "firebase-admin": "^11.0.0",
+    "firebase-functions": "^4.0.0"
+  }
+}
+EOL

@@ -7,6 +7,7 @@ import { Timestamp } from 'firebase/firestore';
 // Ensure you have the GOOGLE_APPLICATION_CREDENTIALS environment variable set.
 if (!admin.apps.length) {
   try {
+    // Attempt to initialize with application default credentials
     admin.initializeApp();
   } catch (error) {
     console.error('Firebase admin initialization error', error);
@@ -48,7 +49,7 @@ export async function POST(req: NextRequest) {
       .collection('notification_logs')
       .add(notificationLog);
 
-    // 2. Send Push Notification via FCM
+    // 2. Send Push Notification via FCM v1 API
     const payload: admin.messaging.Message = {
       token: fcmToken,
       notification: {
@@ -57,7 +58,7 @@ export async function POST(req: NextRequest) {
       },
       webpush: {
         fcmOptions: {
-          link: `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/notifications`,
+          link: `${process.env.NEXT_PUBLIC_BASE_URL || ''}/dashboard/notifications`,
         },
       },
     };
@@ -71,8 +72,9 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: any) {
     console.error('Error sending alert:', error);
+    // Provide a more structured error response
     return NextResponse.json(
-      { success: false, error: error.message },
+      { success: false, error: 'Failed to send alert', details: error.message },
       { status: 500 }
     );
   }

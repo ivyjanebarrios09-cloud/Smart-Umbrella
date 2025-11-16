@@ -118,6 +118,7 @@ export function SignupForm() {
         id: user.uid,
         name: values.name,
         email: values.email,
+        fcmToken: null, // Initialize fcmToken
       }, { merge: true });
 
       router.push('/dashboard');
@@ -140,6 +141,7 @@ export function SignupForm() {
         id: user.uid,
         name: user.displayName,
         email: user.email,
+        fcmToken: null, // Initialize fcmToken
       }, { merge: true });
 
 
