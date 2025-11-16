@@ -77,8 +77,8 @@ export function DashboardClient() {
           </CardTitle>
           <CardDescription>
             {areDevicesLoading
-              ? 'Loading device...'
-              : device?.name || 'Unknown Device'}
+              ? 'Loading location...'
+              : device?.name || 'Unknown Location'}
           </CardDescription>
         </CardHeader>
         <CardContent>
