@@ -19,10 +19,10 @@ import {
   Thermometer,
   Wind,
 } from 'lucide-react';
-import { useDatabase, useMemoFirebase } from '@/firebase';
-import { useRtdbValue } from '@/firebase/rtdb/use-rtdb-value';
-import { ref } from 'firebase/database';
+import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
 import { WeatherData, WeatherCondition, DailyForecast } from '@/lib/types';
+import Link from 'next/link';
 
 const weatherConditions: Record<
   WeatherCondition,
@@ -56,23 +56,20 @@ const getDayOfWeek = (dateString: string) => {
 };
 
 export function DashboardClient() {
-  const database = useDatabase();
+  const firestore = useFirestore();
 
-  const weatherRef = useMemoFirebase(() => {
-    if (!database) return null;
-    // Point directly to the /weather/current path
-    return ref(database, 'weather/current');
-  }, [database]);
+  const weatherDocRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, 'weather/current');
+  }, [firestore]);
 
-  // The hook now returns a single WeatherData object or null
   const { data: latestWeather, isLoading: isWeatherLoading } =
-    useRtdbValue<WeatherData>(weatherRef);
+    useDoc<WeatherData>(weatherDocRef);
 
   const forecastArray: DailyForecast[] | null = useMemo(() => {
     if (!latestWeather?.forecast_daily_raw) return null;
 
     try {
-      // Parse the forecast_daily_raw JSON string
       const forecastData = JSON.parse(latestWeather.forecast_daily_raw);
       
       if (
@@ -84,7 +81,6 @@ export function DashboardClient() {
         return null;
       }
       
-      // Map the parsed data into the DailyForecast array structure
       return forecastData.time.map((date: string, index: number) => ({
         date,
         weathercode: forecastData.weathercode[index],
@@ -263,7 +259,11 @@ export function DashboardClient() {
             <Bell className="h-6 w-6 text-primary" />
             <span>Notification History</span>
           </CardTitle>
-          <CardDescription>Recent alerts</CardDescription>
+           <CardDescription>
+            <Link href="/dashboard/notifications" className="hover:underline">
+              Recent alerts. Click to see all.
+            </Link>
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center h-24 text-muted-foreground">
@@ -274,3 +274,5 @@ export function DashboardClient() {
     </div>
   );
 }
+
+    
