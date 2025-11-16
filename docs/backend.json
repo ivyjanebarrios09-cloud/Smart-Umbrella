@@ -39,6 +39,10 @@
           "type": "string",
           "description": "Unique identifier for the umbrella."
         },
+        "deviceId": {
+          "type": "string",
+          "description": "The unique device identifier for the umbrella hardware."
+        },
         "userId": {
           "type": "string",
           "description": "Reference to User. (Relationship: User 1:N Umbrella). The ID of the user who owns this umbrella."
@@ -62,6 +66,7 @@
       },
       "required": [
         "id",
+        "deviceId",
         "userId",
         "ledEnabled",
         "leftBehindNotificationEnabled",

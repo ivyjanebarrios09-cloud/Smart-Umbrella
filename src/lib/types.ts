@@ -47,4 +47,5 @@ export interface NotificationLog {
 export interface Umbrella {
   id: string;
   name: string;
+  deviceId: string;
 }

@@ -43,6 +43,7 @@ import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 const newUmbrellaFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+  deviceId: z.string().min(1, { message: "Device ID is required." }),
 });
 
 type NewUmbrellaFormValues = z.infer<typeof newUmbrellaFormSchema>;
@@ -69,6 +70,7 @@ export default function SettingsPage() {
     resolver: zodResolver(newUmbrellaFormSchema),
     defaultValues: {
       name: '',
+      deviceId: '',
     },
   });
 
@@ -78,6 +80,7 @@ export default function SettingsPage() {
     try {
       addDocumentNonBlocking(umbrellasRef, {
         name: data.name,
+        deviceId: data.deviceId,
         userId: user.uid,
         ledEnabled: false, // Default value
         leftBehindNotificationEnabled: true, // Default value
@@ -170,7 +173,7 @@ export default function SettingsPage() {
             <CardHeader>
               <CardTitle>Register New Umbrella</CardTitle>
               <CardDescription>
-                Give your new umbrella a name to register it.
+                Provide a name and device ID to register your new umbrella.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -184,6 +187,19 @@ export default function SettingsPage() {
                         <FormLabel>Umbrella Name</FormLabel>
                         <FormControl>
                           <Input placeholder="e.g., My Blue Umbrella" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="deviceId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Device ID</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter the device ID" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -207,7 +223,7 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
-                <Label>Umbrella IDs</Label>
+                <Label>Registered Umbrellas</Label>
                 {isUserLoading || areUmbrellasLoading ? (
                    <p className="text-sm text-muted-foreground">Loading umbrellas...</p>
                 ) : umbrellas && umbrellas.length > 0 ? (
@@ -216,8 +232,8 @@ export default function SettingsPage() {
                       <div key={umbrella.id} className="space-y-2">
                         <p className="text-sm font-medium">{umbrella.name}</p>
                          <div className="flex gap-2">
-                            <Input id={`umbrellaId-${umbrella.id}`} value={umbrella.id} readOnly />
-                            <Button variant="outline" onClick={() => copyToClipboard(umbrella.id)}>Copy</Button>
+                            <Input id={`deviceId-${umbrella.id}`} value={umbrella.deviceId || 'N/A'} readOnly />
+                            <Button variant="outline" onClick={() => copyToClipboard(umbrella.deviceId || '')}>Copy ID</Button>
                         </div>
                       </div>
                     ))}
