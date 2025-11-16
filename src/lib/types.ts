@@ -53,6 +53,8 @@ export interface Device {
   temperature?: number;
   windspeed?: number;
   condition?: WeatherCondition;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface UmbrellaActivity {
@@ -61,5 +63,7 @@ export interface UmbrellaActivity {
   timestamp: Timestamp;
   activityType: string;
 }
+
+    
 
     
