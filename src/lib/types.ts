@@ -49,3 +49,12 @@ export interface Device {
   name: string;
   deviceId: string;
 }
+
+export interface UmbrellaActivity {
+  id: string;
+  deviceId: string;
+  timestamp: Timestamp;
+  activityType: string;
+}
+
+    

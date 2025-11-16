@@ -156,6 +156,18 @@ service cloud.firestore {
         allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
         allow delete: if isExistingOwner(userId);
       }
+      
+      /**
+       * @description Enforces user-level access control for umbrella activity.
+       * @path /users/{userId}/umbrellaActivity/{activityId}
+       */
+      match /umbrellaActivity/{activityId} {
+        allow create: if isOwner(userId);
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow update: if isExistingOwner(userId);
+        allow delete: if isExistingOwner(userId);
+      }
     }
     
     /**
@@ -170,3 +182,5 @@ service cloud.firestore {
     }
   }
 }
+
+    

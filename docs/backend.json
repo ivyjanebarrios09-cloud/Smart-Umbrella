@@ -186,6 +186,32 @@
         "deviceId",
         "message"
       ]
+    },
+    "UmbrellaActivity": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UmbrellaActivity",
+      "type": "object",
+      "description": "Represents a log of umbrella activity.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the activity log."
+        },
+        "deviceId": {
+          "type": "string",
+          "description": "The ID of the device."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The time of the activity."
+        },
+        "activityType": {
+          "type": "string",
+          "description": "Type of activity (e.g., 'connected', 'disconnected', 'led_on')."
+        }
+      },
+      "required": ["id", "deviceId", "timestamp", "activityType"]
     }
   },
   "auth": {
@@ -271,8 +297,30 @@
             }
           ]
         }
+      },
+      {
+        "path": "/users/{userId}/umbrellaActivity/{activityId}",
+        "definition": {
+          "entityName": "UmbrellaActivity",
+          "schema": {
+            "$ref": "#/backend/entities/UmbrellaActivity"
+          },
+          "description": "Subcollection to store activity logs for a user's devices.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "activityId",
+              "description": "The unique identifier of the activity log entry."
+            }
+          ]
+        }
       }
     ],
     "reasoning": "The Firestore data structure is designed to ensure security, scalability, and ease of debugging, following the principles of Authorization Independence, Clarity of Intent, DBAC, and QAPs. User-owned data is stored under the `/users/{userId}` path, providing clear ownership and simplifying security rules. Denormalization is used to avoid `get()` calls in security rules, ensuring atomic operations and making rules easier to understand.  All collections are structurally segregated based on access needs.\n\n*   **Authorization Independence**: Achieved by storing user-specific data (Devices, NotificationLogs, WeatherAlertPreferences) directly under the `/users/{userId}` collection, thus eliminating the need for hierarchical authorization and `get()` calls in security rules.\n*   **QAPs Support**:  The structure supports secure `list` operations by ensuring that each collection maintains a homogeneous security posture.  For example, only the authenticated user can access their own `/users/{userId}/devices` collection, and global roles are managed by existence checks in dedicated collections. Path-based ownership ensures the ability to secure `list` operations.\n\nThe schema focuses on path-based ownership for private data (Devices, NotificationLogs, WeatherAlertPreferences)."
   }
 }
+
+    
