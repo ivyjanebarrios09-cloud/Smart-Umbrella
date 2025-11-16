@@ -31,10 +31,9 @@ import {
   GoogleAuthProvider,
   AuthError,
 } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { toast } from '@/hooks/use-toast';
 import { useState } from 'react';
-import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address.' }),
@@ -86,14 +85,26 @@ export function LoginForm() {
 
   const handleAuthError = (error: AuthError) => {
     let description = 'An unexpected error occurred. Please try again.';
-    if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-      description = 'Invalid email or password. Please check your credentials and try again.';
+    switch (error.code) {
+      case 'auth/user-not-found':
+      case 'auth/wrong-password':
+      case 'auth/invalid-credential':
+        description = 'Invalid email or password. Please check your credentials and try again.';
+        break;
+      case 'auth/popup-closed-by-user':
+      case 'auth/cancelled-popup-request':
+        description = 'The sign-in process was cancelled. Please try again.';
+        break;
+      case 'auth/unauthorized-domain':
+         description = 'This domain is not authorized for sign-in. Please contact support.';
+         break;
     }
     toast({
       variant: 'destructive',
       title: 'Authentication Failed',
       description,
     });
+    console.error("Authentication error:", error);
   };
 
 
@@ -116,11 +127,11 @@ export function LoginForm() {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
-      // Check if user document exists, if not, create it.
       const userDocRef = doc(firestore, 'users', user.uid);
       const userDoc = await getDoc(userDocRef);
+
       if (!userDoc.exists()) {
-        setDocumentNonBlocking(userDocRef, {
+        await setDoc(userDocRef, {
           id: user.uid,
           name: user.displayName,
           email: user.email,

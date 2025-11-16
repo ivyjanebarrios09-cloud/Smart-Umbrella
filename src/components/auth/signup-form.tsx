@@ -12,7 +12,7 @@ import {
   GoogleAuthProvider,
   AuthError
 } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -35,7 +35,6 @@ import { Separator } from '@/components/ui/separator';
 import { useAuth, useFirestore } from '@/firebase';
 import { toast } from '@/hooks/use-toast';
 import { useState } from 'react';
-import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -91,14 +90,24 @@ export function SignupForm() {
 
   const handleAuthError = (error: AuthError) => {
     let description = 'An unexpected error occurred. Please try again.';
-    if (error.code === 'auth/email-already-in-use') {
-      description = 'This email is already in use. Please try logging in.';
+    switch (error.code) {
+      case 'auth/email-already-in-use':
+        description = 'This email is already in use. Please try logging in.';
+        break;
+      case 'auth/popup-closed-by-user':
+      case 'auth/cancelled-popup-request':
+        description = 'The sign-up process was cancelled. Please try again.';
+        break;
+      case 'auth/unauthorized-domain':
+        description = 'This domain is not authorized for sign-up. Please contact support.';
+        break;
     }
     toast({
       variant: 'destructive',
       title: 'Authentication Failed',
       description,
     });
+    console.error("Authentication error:", error);
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -114,7 +123,7 @@ export function SignupForm() {
       await updateProfile(user, { displayName: values.name });
 
       const userDocRef = doc(firestore, 'users', user.uid);
-      setDocumentNonBlocking(userDocRef, {
+      await setDoc(userDocRef, {
         id: user.uid,
         name: values.name,
         email: values.email,
@@ -137,17 +146,16 @@ export function SignupForm() {
       const user = result.user;
 
       const userDocRef = doc(firestore, 'users', user.uid);
-       const userDoc = await getDoc(userDocRef);
+      const userDoc = await getDoc(userDocRef);
 
       if (!userDoc.exists()) {
-        setDocumentNonBlocking(userDocRef, {
+        await setDoc(userDocRef, {
           id: user.uid,
           name: user.displayName,
           email: user.email,
           fcmToken: null, // Initialize fcmToken
         }, { merge: true });
       }
-
 
       router.push('/dashboard');
     } catch (e) {
