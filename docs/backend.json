@@ -62,6 +62,26 @@
         "leftBehindDistance": {
           "type": "number",
           "description": "The distance threshold (in meters) for a left-behind notification."
+        },
+        "latitude": {
+          "type": "number",
+          "description": "The last known latitude of the device."
+        },
+        "longitude": {
+          "type": "number",
+          "description": "The last known longitude of the device."
+        },
+        "temperature": {
+          "type": "number",
+          "description": "The last recorded temperature from the device."
+        },
+        "windspeed": {
+          "type": "number",
+          "description": "The last recorded windspeed from the device."
+        },
+        "condition": {
+          "type": "string",
+          "description": "The last recorded weather condition from the device."
         }
       },
       "required": [
@@ -322,5 +342,3 @@
     "reasoning": "The Firestore data structure is designed to ensure security, scalability, and ease of debugging, following the principles of Authorization Independence, Clarity of Intent, DBAC, and QAPs. User-owned data is stored under the `/users/{userId}` path, providing clear ownership and simplifying security rules. Denormalization is used to avoid `get()` calls in security rules, ensuring atomic operations and making rules easier to understand.  All collections are structurally segregated based on access needs.\n\n*   **Authorization Independence**: Achieved by storing user-specific data (Devices, NotificationLogs, WeatherAlertPreferences) directly under the `/users/{userId}` collection, thus eliminating the need for hierarchical authorization and `get()` calls in security rules.\n*   **QAPs Support**:  The structure supports secure `list` operations by ensuring that each collection maintains a homogeneous security posture.  For example, only the authenticated user can access their own `/users/{userId}/devices` collection, and global roles are managed by existence checks in dedicated collections. Path-based ownership ensures the ability to secure `list` operations.\n\nThe schema focuses on path-based ownership for private data (Devices, NotificationLogs, WeatherAlertPreferences)."
   }
 }
-
-    

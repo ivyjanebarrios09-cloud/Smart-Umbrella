@@ -48,6 +48,11 @@ export interface Device {
   id: string;
   name: string;
   deviceId: string;
+  latitude?: number;
+  longitude?: number;
+  temperature?: number;
+  windspeed?: number;
+  condition?: WeatherCondition;
 }
 
 export interface UmbrellaActivity {
