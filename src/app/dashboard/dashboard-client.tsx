@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/card';
 import {
   Bell,
+  Calendar,
   CloudRain,
   Cloudy,
   MapPin,
@@ -18,9 +19,9 @@ import {
   Thermometer,
   Wind,
 } from 'lucide-react';
-import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { collection, limit, query } from 'firebase/firestore';
-import { WeatherCondition, Device } from '@/lib/types';
+import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
+import { collection, limit, query, doc } from 'firebase/firestore';
+import { WeatherCondition, Device, DailyForecast, WeatherData } from '@/lib/types';
 import Link from 'next/link';
 
 const weatherConditions: Record<
@@ -34,6 +35,24 @@ const weatherConditions: Record<
     icon: <Cloudy className="h-6 w-6 text-gray-400" />,
     name: 'Partly cloudy',
   },
+};
+
+const getWeatherConditionFromCode = (code: number): WeatherCondition => {
+  if (code <= 1) return 'Sunny';
+  if (code === 2) return 'Partly cloudy';
+  if (code === 3) return 'Cloudy';
+  if (code >= 51 && code <= 67) return 'Rain';
+  if (code >= 80 && code <= 82) return 'Rain';
+  return 'Cloudy';
+};
+
+const getDayOfWeek = (dateString: string) => {
+  const date = new Date(dateString);
+  return new Date(
+    date.getUTCFullYear(),
+    date.getUTCMonth(),
+    date.getUTCDate()
+  ).toLocaleDateString('en-US', { weekday: 'short' });
 };
 
 export function DashboardClient() {
@@ -52,6 +71,42 @@ export function DashboardClient() {
     useCollection<Device>(devicesQuery);
     
   const device = devices?.[0];
+
+  const weatherDocRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, 'weather/current');
+  }, [firestore]);
+
+  const { data: latestWeather, isLoading: isWeatherLoading } =
+    useDoc<WeatherData>(weatherDocRef);
+  
+  const forecastArray: DailyForecast[] | null = useMemo(() => {
+    if (!latestWeather?.forecast_daily_raw) return null;
+
+    try {
+      const forecastData = JSON.parse(latestWeather.forecast_daily_raw);
+      
+      if (
+        !forecastData.time ||
+        !forecastData.weathercode ||
+        !forecastData.temperature_2m_max ||
+        !forecastData.temperature_2m_min
+      ) {
+        return null;
+      }
+      
+      return forecastData.time.map((date: string, index: number) => ({
+        date,
+        weathercode: forecastData.weathercode[index],
+        condition: getWeatherConditionFromCode(forecastData.weathercode[index]),
+        temperature_max: forecastData.temperature_2m_max[index],
+        temperature_min: forecastData.temperature_2m_min[index],
+      }));
+    } catch (error) {
+      console.error("Failed to parse forecast JSON:", error);
+      return null;
+    }
+  }, [latestWeather]);
 
   const currentTemperature = device?.temperature;
   const currentWindspeed = device?.windspeed;
@@ -162,6 +217,52 @@ export function DashboardClient() {
           ) : (
             <div className="flex items-center justify-center h-48 text-muted-foreground">
               <p>No location data available.</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+       {/* 7-Day Forecast Card */}
+      <Card className="lg:col-span-2">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-6 w-6 text-primary" />
+            <span>7-Day Forecast</span>
+          </CardTitle>
+          <CardDescription>Upcoming weather at a glance</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isWeatherLoading ? (
+            <div className="flex items-center justify-center h-48 text-muted-foreground">
+              <p>Loading forecast...</p>
+            </div>
+          ) : forecastArray && forecastArray.length > 0 ? (
+            <ul className="space-y-4">
+              {forecastArray.map((day, index) => {
+                const conditionIcon =
+                  weatherConditions[
+                    day.condition as keyof typeof weatherConditions
+                  ]?.icon || <Cloudy className="h-6 w-6 text-gray-400" />;
+                return (
+                  <li
+                    key={index}
+                    className="flex items-center justify-between"
+                  >
+                    <span className="font-semibold w-12">
+                      {getDayOfWeek(day.date)}
+                    </span>
+                    <span className="flex-shrink-0">{conditionIcon}</span>
+                    <span className="w-20 text-right text-muted-foreground">
+                      {day.temperature_max.toFixed(0)}° /{' '}
+                      {day.temperature_min.toFixed(0)}°
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <div className="flex items-center justify-center h-48 text-muted-foreground">
+              <p>No forecast data available.</p>
             </div>
           )}
         </CardContent>
