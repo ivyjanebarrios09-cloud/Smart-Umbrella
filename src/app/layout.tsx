@@ -11,6 +11,9 @@ export const metadata: Metadata = {
   title: 'Smart Umbrella Tracker - Never lose your umbrella again',
   description:
     'Connect your smart umbrella, get weather alerts, and find it anytime.',
+  icons: {
+    icon: '/image/favicon.ico.png',
+  },
 };
 
 export default function RootLayout({
