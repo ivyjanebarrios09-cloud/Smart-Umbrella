@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -64,11 +65,6 @@ export default function LandingPage() {
                 alerts, real-time weather notifications, and find your umbrella
                 right from the app.
               </p>
-              <div className="mt-8 flex justify-center">
-                <Button size="lg" asChild>
-                  <Link href="/signup">Get Started for Free</Link>
-                </Button>
-              </div>
             </div>
           </div>
         </section>
