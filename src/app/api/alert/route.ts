@@ -1,59 +1,31 @@
-<<<<<<< HEAD
-import { NextRequest, NextResponse } from 'next/server';
-import * as admin from 'firebase-admin';
-import { Timestamp } from 'firebase/firestore';
 
-// Initialize Firebase Admin SDK
-// This should only be done once per server instance.
-// Ensure you have the GOOGLE_APPLICATION_CREDENTIALS environment variable set.
-if (!admin.apps.length) {
-  try {
-    // Attempt to initialize with application default credentials
-    admin.initializeApp();
-  } catch (error) {
-    console.error('Firebase admin initialization error', error);
-  }
-}
-
-const db = admin.firestore();
-const fcm = admin.messaging();
-
-export async function POST(req: NextRequest) {
-  try {
-    const body = await req.json();
-    const { userId, umbrellaId, fcmToken } = body;
-
-    // Validate request body
-    if (!userId || !umbrellaId || !fcmToken) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Missing required fields: userId, umbrellaId, or fcmToken',
-        },
-=======
 'use server';
 
 import { NextResponse } from 'next/server';
-import { initializeApp, getApps } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
+import * as admin from 'firebase-admin';
+import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { z } from 'zod';
 
 // Zod schema for request validation
 const alertSchema = z.object({
   userId: z.string().min(1, { message: 'User ID is required.' }),
   umbrellaId: z.string().min(1, { message: 'Umbrella ID is required.' }),
-  type: z.string().default('left_behind'),
   message: z.string().min(1, { message: 'Message is required.' }),
+  type: z.string().default('left_behind'),
+  fcmToken: z.string().optional(), // fcmToken is optional but recommended
 });
 
-// Initialize Firebase Admin SDK
-// This is a server-side operation, so we use the Admin SDK.
-// It will automatically use Application Default Credentials in the App Hosting environment.
-if (!getApps().length) {
-  initializeApp();
+// Initialize Firebase Admin SDK if not already initialized
+if (!admin.apps.length) {
+  try {
+    admin.initializeApp();
+  } catch (error) {
+    console.error('Firebase admin initialization error', error);
+  }
 }
 
 const db = getFirestore();
+const fcm = admin.messaging();
 
 export async function POST(request: Request) {
   try {
@@ -63,58 +35,13 @@ export async function POST(request: Request) {
     if (!parsedData.success) {
       return NextResponse.json(
         { error: 'Invalid input', details: parsedData.error.flatten() },
->>>>>>> origin/main
         { status: 400 }
       );
     }
 
-<<<<<<< HEAD
-    // 1. Create Notification Log
-    const notificationMessage = 'It looks like you left your umbrella behind!';
-    const notificationLog = {
-      userId,
-      umbrellaId,
-      type: 'left_behind',
-      message: notificationMessage,
-      timestamp: Timestamp.now(),
-    };
+    const { userId, umbrellaId, type, message, fcmToken } = parsedData.data;
 
-    const logRef = await db
-      .collection('users')
-      .doc(userId)
-      .collection('notification_logs')
-      .add(notificationLog);
-
-    // 2. Send Push Notification via FCM v1 API
-    const payload: admin.messaging.Message = {
-      token: fcmToken,
-      notification: {
-        title: 'Umbrella Left Behind!',
-        body: notificationMessage,
-      },
-      webpush: {
-        fcmOptions: {
-          link: `${process.env.NEXT_PUBLIC_BASE_URL || ''}/dashboard/notifications`,
-        },
-      },
-    };
-
-    await fcm.send(payload);
-
-    return NextResponse.json({
-      success: true,
-      message: 'Alert sent successfully',
-      logId: logRef.id,
-    });
-  } catch (error: any) {
-    console.error('Error sending alert:', error);
-    // Provide a more structured error response
-    return NextResponse.json(
-      { success: false, error: 'Failed to send alert', details: error.message },
-=======
-    const { userId, umbrellaId, type, message } = parsedData.data;
-
-    // Create a new notification log entry
+    // 1. Create a new notification log entry
     const newLogRef = db.collection(`users/${userId}/notification_logs`).doc();
     const newLog = {
       id: newLogRef.id,
@@ -122,11 +49,28 @@ export async function POST(request: Request) {
       umbrellaId,
       type,
       message,
-      timestamp: new Date().toISOString(),
+      timestamp: Timestamp.now(), // Use Firestore Timestamp
     };
 
-    // Save to Firestore
     await newLogRef.set(newLog);
+
+    // 2. Send Push Notification if fcmToken is provided
+    if (fcmToken) {
+      const payload: admin.messaging.Message = {
+        token: fcmToken,
+        notification: {
+          title: 'Umbrella Left Behind!',
+          body: message,
+        },
+        webpush: {
+          fcmOptions: {
+            link: `${process.env.NEXT_PUBLIC_BASE_URL || ''}/dashboard/notifications`,
+          },
+        },
+      };
+
+      await fcm.send(payload);
+    }
 
     return NextResponse.json(
       { success: true, notificationId: newLogRef.id },
@@ -136,7 +80,6 @@ export async function POST(request: Request) {
     console.error('Error creating notification log:', error);
     return NextResponse.json(
       { error: 'Failed to create notification log', details: error.message },
->>>>>>> origin/main
       { status: 500 }
     );
   }

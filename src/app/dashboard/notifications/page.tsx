@@ -1,14 +1,9 @@
+
 'use client';
 
-<<<<<<< HEAD
-import { useEffect } from 'react';
-import Link from 'next/link';
-import { ArrowLeft, Bell } from 'lucide-react';
-=======
 import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { collection, orderBy, query } from 'firebase/firestore';
+import { collection, orderBy, query, Timestamp } from 'firebase/firestore';
 import type { NotificationLog } from '@/lib/types';
->>>>>>> origin/main
 import {
   Card,
   CardContent,
@@ -16,38 +11,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-<<<<<<< HEAD
-import {
-  useCollection,
-  useFirestore,
-  useMemoFirebase,
-  useUser,
-} from '@/firebase';
-import { collection } from 'firebase/firestore';
-import { NotificationLog } from '@/lib/types';
-import { format } from 'date-fns';
-
-export default function NotificationHistoryPage() {
-  const { user } = useUser();
-  const firestore = useFirestore();
-
-  const notificationsQuery = useMemoFirebase(() => {
-    if (!user) return null;
-    return collection(firestore, `users/${user.uid}/notification_logs`);
-  }, [user, firestore]);
-
-  const {
-    data: notifications,
-    isLoading,
-    error,
-  } = useCollection<NotificationLog>(notificationsQuery);
-
-  useEffect(() => {
-    if (error) {
-      console.error('Error fetching notifications:', error);
-    }
-  }, [error]);
-=======
 import { ArrowLeft, Bell, History } from 'lucide-react';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
@@ -78,7 +41,12 @@ export default function NotificationHistoryPage() {
         return <Bell className="h-5 w-5 text-muted-foreground" />;
     }
   };
->>>>>>> origin/main
+
+  const formatTimestamp = (timestamp: Timestamp | string) => {
+    if (!timestamp) return 'N/A';
+    const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp.toDate();
+    return formatDistanceToNow(date, { addSuffix: true });
+  }
 
   return (
     <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
@@ -93,52 +61,6 @@ export default function NotificationHistoryPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-<<<<<<< HEAD
-              <Bell className="h-6 w-6" />
-              <span>Notification History</span>
-            </CardTitle>
-            <CardDescription>
-              Here are all the alerts you've received.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoading && <p className="text-center">Loading notifications...</p>}
-            {error && (
-              <p className="text-center text-destructive">
-                Could not load notifications.
-              </p>
-            )}
-            {!isLoading && !error && notifications?.length === 0 && (
-              <p className="text-center text-muted-foreground">
-                You have no notifications yet.
-              </p>
-            )}
-            {notifications && notifications.length > 0 && (
-              <ul className="space-y-4">
-                {notifications
-                  .sort((a, b) => b.timestamp.toMillis() - a.timestamp.toMillis())
-                  .map((log) => (
-                    <li
-                      key={log.id}
-                      className="flex items-start justify-between rounded-lg border p-4"
-                    >
-                      <div>
-                        <p className="font-semibold">{log.message}</p>
-                        <p className="text-sm text-muted-foreground">
-                          Type: {log.type}
-                        </p>
-                      </div>
-                      <span className="text-right text-sm text-muted-foreground">
-                        {format(
-                          log.timestamp.toDate(),
-                          "MMM d, yyyy 'at' h:mm a"
-                        )}
-                      </span>
-                    </li>
-                  ))}
-              </ul>
-            )}
-=======
               <History className="h-6 w-6 text-primary" />
               Notification History
             </CardTitle>
@@ -149,7 +71,7 @@ export default function NotificationHistoryPage() {
           <CardContent>
             <ScrollArea className="h-[60vh]">
               {isUserLoading || areNotificationsLoading ? (
-                <p>Loading notifications...</p>
+                <p className="text-center text-muted-foreground">Loading notifications...</p>
               ) : notifications && notifications.length > 0 ? (
                 <ul className="space-y-4">
                   {notifications.map((log) => (
@@ -161,9 +83,7 @@ export default function NotificationHistoryPage() {
                       <div className="flex-1">
                         <p className="font-medium">{log.message}</p>
                         <p className="text-sm text-muted-foreground">
-                          {formatDistanceToNow(new Date(log.timestamp), {
-                            addSuffix: true,
-                          })}
+                          {formatTimestamp(log.timestamp)}
                         </p>
                       </div>
                     </li>
@@ -177,7 +97,6 @@ export default function NotificationHistoryPage() {
                 </div>
               )}
             </ScrollArea>
->>>>>>> origin/main
           </CardContent>
         </Card>
       </div>
