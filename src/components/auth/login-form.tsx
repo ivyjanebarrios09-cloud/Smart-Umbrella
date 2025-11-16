@@ -24,15 +24,17 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { useAuth } from '@/firebase';
+import { useAuth, useFirestore } from '@/firebase';
 import {
   signInWithEmailAndPassword,
   signInWithPopup,
   GoogleAuthProvider,
   AuthError,
 } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 import { toast } from '@/hooks/use-toast';
 import { useState } from 'react';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address.' }),
@@ -71,6 +73,7 @@ function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
 export function LoginForm() {
   const router = useRouter();
   const auth = useAuth();
+  const firestore = useFirestore();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -110,7 +113,21 @@ export function LoginForm() {
     setIsLoading(true);
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      // Check if user document exists, if not, create it.
+      const userDocRef = doc(firestore, 'users', user.uid);
+      const userDoc = await getDoc(userDocRef);
+      if (!userDoc.exists()) {
+        setDocumentNonBlocking(userDocRef, {
+          id: user.uid,
+          name: user.displayName,
+          email: user.email,
+          fcmToken: null,
+        }, { merge: true });
+      }
+
       router.push('/dashboard');
     } catch (e) {
        handleAuthError(e as AuthError);

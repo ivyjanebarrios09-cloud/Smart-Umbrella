@@ -12,7 +12,7 @@ import {
   GoogleAuthProvider,
   AuthError
 } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -137,12 +137,16 @@ export function SignupForm() {
       const user = result.user;
 
       const userDocRef = doc(firestore, 'users', user.uid);
-       setDocumentNonBlocking(userDocRef, {
-        id: user.uid,
-        name: user.displayName,
-        email: user.email,
-        fcmToken: null, // Initialize fcmToken
-      }, { merge: true });
+       const userDoc = await getDoc(userDocRef);
+
+      if (!userDoc.exists()) {
+        setDocumentNonBlocking(userDocRef, {
+          id: user.uid,
+          name: user.displayName,
+          email: user.email,
+          fcmToken: null, // Initialize fcmToken
+        }, { merge: true });
+      }
 
 
       router.push('/dashboard');
