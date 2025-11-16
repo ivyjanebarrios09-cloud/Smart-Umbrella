@@ -203,18 +203,10 @@ export default function SettingsPage() {
                 Account Information
               </CardTitle>
               <CardDescription>
-                Your user and device identifiers for configuration.
+                Your device identifiers for configuration.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="userId">User ID</Label>
-                <div className="flex gap-2">
-                  <Input id="userId" value={user?.uid ?? 'Loading...'} readOnly />
-                  <Button variant="outline" onClick={() => copyToClipboard(user?.uid ?? '')}>Copy</Button>
-                </div>
-              </div>
-
               <div className="space-y-4">
                 <Label>Umbrella IDs</Label>
                 {isUserLoading || areUmbrellasLoading ? (
