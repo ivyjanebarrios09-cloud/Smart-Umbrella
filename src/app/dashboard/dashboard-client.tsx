@@ -11,7 +11,6 @@ import {
 } from '@/components/ui/card';
 import {
   Bell,
-  Calendar,
   CloudRain,
   Cloudy,
   MapPin,
@@ -58,13 +57,9 @@ export function DashboardClient() {
   const currentWindspeed = device?.windspeed;
   const currentConditionName = device?.condition ?? 'Cloudy';
   const displayCondition = weatherConditions[currentConditionName];
+  const location = device?.location;
+  const time = device?.time;
 
-  const mapSrc = useMemo(() => {
-    if (device?.latitude && device?.longitude) {
-      return `https://maps.google.com/maps?q=${device.latitude},${device.longitude}&hl=es;z=14&output=embed`;
-    }
-    return '';
-  }, [device]);
 
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -78,7 +73,7 @@ export function DashboardClient() {
           <CardDescription>
             {areDevicesLoading
               ? 'Loading location...'
-              : device?.name || 'Unknown Location'}
+              : location || 'Unknown Location'}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -93,7 +88,7 @@ export function DashboardClient() {
               </div>
               <div className="flex items-center gap-2 text-muted-foreground">
                 {displayCondition?.icon}
-                <span>{displayCondition?.name}</span>
+                <span>{displayCondition?.name} at {time}</span>
               </div>
             </div>
           ) : (
@@ -128,38 +123,6 @@ export function DashboardClient() {
           ) : (
             <div className="flex items-center justify-center h-24 text-muted-foreground">
               <p>No wind data available.</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Map Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MapPin className="h-6 w-6 text-primary" />
-            <span>Last Known Location</span>
-          </CardTitle>
-          <CardDescription>GPS coordinates of the device</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {areDevicesLoading ? (
-            <div className="flex items-center justify-center h-48 text-muted-foreground">
-              <p>Loading map...</p>
-            </div>
-          ) : mapSrc ? (
-            <div className="aspect-video overflow-hidden rounded-lg">
-              <iframe
-                width="100%"
-                height="100%"
-                loading="lazy"
-                allowFullScreen
-                src={mapSrc}
-              ></iframe>
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-48 text-muted-foreground">
-              <p>No location data available.</p>
             </div>
           )}
         </CardContent>

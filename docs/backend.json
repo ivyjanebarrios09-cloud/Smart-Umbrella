@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "User": {
@@ -63,13 +64,13 @@
           "type": "number",
           "description": "The distance threshold (in meters) for a left-behind notification."
         },
-        "latitude": {
-          "type": "number",
-          "description": "The last known latitude of the device."
+        "location": {
+          "type": "string",
+          "description": "The last known location of the device as a string."
         },
-        "longitude": {
-          "type": "number",
-          "description": "The last known longitude of the device."
+        "time": {
+          "type": "string",
+          "description": "The time of the last reading."
         },
         "temperature": {
           "type": "number",
@@ -88,6 +89,7 @@
         "id",
         "deviceId",
         "userId",
+        "name",
         "ledEnabled",
         "leftBehindNotificationEnabled",
         "leftBehindDistance"

@@ -48,8 +48,8 @@ export interface Device {
   id: string;
   name: string;
   deviceId: string;
-  latitude?: number;
-  longitude?: number;
+  location?: string;
+  time?: string;
   temperature?: number;
   windspeed?: number;
   condition?: WeatherCondition;
