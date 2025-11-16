@@ -124,7 +124,7 @@ export function LoginForm() {
     <Card className="w-full max-w-sm">
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold">
-          Log In to UmbraGuard
+          Log In to Smart Umbrella Tracker
         </CardTitle>
         <CardDescription>
           Enter your credentials to access your dashboard.

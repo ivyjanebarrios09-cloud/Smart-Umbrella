@@ -42,7 +42,7 @@ function Header() {
         <div className="mr-auto flex items-center gap-2">
           <Link href="/" className="flex items-center gap-2">
             <Logo className="h-6 w-6 text-primary" />
-            <span className="font-bold">UmbraGuard</span>
+            <span className="font-bold">Smart Umbrella Tracker</span>
           </Link>
         </div>
         <div className="flex items-center gap-4">

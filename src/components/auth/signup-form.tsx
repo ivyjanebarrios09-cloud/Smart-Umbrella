@@ -158,7 +158,7 @@ export function SignupForm() {
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold">Create an Account</CardTitle>
         <CardDescription>
-          Join UmbraGuard and keep your umbrella safe.
+          Join and keep your umbrella safe.
         </CardDescription>
       </CardHeader>
       <CardContent>

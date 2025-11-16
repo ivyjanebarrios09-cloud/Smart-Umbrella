@@ -8,7 +8,7 @@ import { FirebaseClientProvider } from '@/firebase/client-provider';
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
 export const metadata: Metadata = {
-  title: 'UmbraGuard - Never lose your umbrella again',
+  title: 'Smart Umbrella Tracker - Never lose your umbrella again',
   description:
     'Connect your smart umbrella, get weather alerts, and find it anytime.',
 };

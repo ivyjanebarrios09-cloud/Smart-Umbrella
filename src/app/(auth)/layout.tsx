@@ -14,7 +14,7 @@ export default function AuthLayout({
           className="flex items-center gap-2 text-foreground/80 hover:text-foreground"
         >
           <Logo className="h-6 w-6" />
-          <span className="font-semibold">UmbraGuard</span>
+          <span className="font-semibold">Smart Umbrella Tracker</span>
         </Link>
       </div>
       {children}

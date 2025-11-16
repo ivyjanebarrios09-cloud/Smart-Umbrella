@@ -5,7 +5,7 @@ export function Logo(props: { className?: string }) {
     <div className={`relative ${props.className}`}>
       <Image
         src="/image/logoo.png"
-        alt="UmbraGuard Logo"
+        alt="Smart Umbrella Tracker Logo"
         fill
         className="object-contain"
       />
