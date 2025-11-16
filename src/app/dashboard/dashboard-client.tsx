@@ -60,43 +60,31 @@ export function DashboardClient() {
 
   const weatherRef = useMemoFirebase(() => {
     if (!database) return null;
-    return ref(database, 'weather');
+    // Point directly to the /weather/current path
+    return ref(database, 'weather/current');
   }, [database]);
 
-  const { data: weatherHistory, isLoading: isWeatherLoading } = useRtdbValue<{
-    [key: string]: WeatherData;
-  }>(weatherRef);
-
-  const latestWeather = useMemo(() => {
-    if (!weatherHistory) return null;
-
-    const allEntries = Object.values(weatherHistory);
-    if (allEntries.length === 0) return null;
-
-    // Sort entries by timestamp in descending order and return the first one.
-    return allEntries.sort((a, b) => (b.timestamp_ms || 0) - (a.timestamp_ms || 0))[0];
-  }, [weatherHistory]);
-
-
-  const currentTemperature = latestWeather?.current?.temperature;
-  const currentWindspeed = latestWeather?.current?.windspeed;
-  const currentConditionName = latestWeather?.current?.condition ?? 'Cloudy';
-  const displayCondition = weatherConditions[currentConditionName];
+  // The hook now returns a single WeatherData object or null
+  const { data: latestWeather, isLoading: isWeatherLoading } =
+    useRtdbValue<WeatherData>(weatherRef);
 
   const forecastArray: DailyForecast[] | null = useMemo(() => {
-    const forecast = latestWeather?.forecast;
-    if (!forecast) return null;
+    if (!latestWeather?.forecast_daily_raw) return null;
 
-    // Handle the case where forecast is an object with time, weathercode, etc.
-    if (
-      typeof forecast === 'object' &&
-      !Array.isArray(forecast) &&
-      'time' in forecast &&
-      'weathercode' in forecast &&
-      'temperature_2m_max' in forecast &&
-      'temperature_2m_min' in forecast
-    ) {
-      const forecastData = forecast as any;
+    try {
+      // Parse the forecast_daily_raw JSON string
+      const forecastData = JSON.parse(latestWeather.forecast_daily_raw);
+      
+      if (
+        !forecastData.time ||
+        !forecastData.weathercode ||
+        !forecastData.temperature_2m_max ||
+        !forecastData.temperature_2m_min
+      ) {
+        return null;
+      }
+      
+      // Map the parsed data into the DailyForecast array structure
       return forecastData.time.map((date: string, index: number) => ({
         date,
         weathercode: forecastData.weathercode[index],
@@ -104,18 +92,17 @@ export function DashboardClient() {
         temperature_max: forecastData.temperature_2m_max[index],
         temperature_min: forecastData.temperature_2m_min[index],
       }));
+    } catch (error) {
+      console.error("Failed to parse forecast JSON:", error);
+      return null;
     }
-
-    // Handle the case where forecast is already an array
-    if (Array.isArray(forecast)) {
-      return forecast.map((day) => ({
-        ...day,
-        condition: getWeatherConditionFromCode(day.weathercode),
-      }));
-    }
-
-    return null;
   }, [latestWeather]);
+
+
+  const currentTemperature = latestWeather?.current?.temperature;
+  const currentWindspeed = latestWeather?.current?.windspeed;
+  const currentConditionName = latestWeather?.current?.condition ?? 'Cloudy';
+  const displayCondition = weatherConditions[currentConditionName];
 
   const mapSrc = useMemo(() => {
     if (latestWeather?.latitude && latestWeather?.longitude) {

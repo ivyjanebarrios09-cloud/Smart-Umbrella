@@ -29,7 +29,7 @@ export interface WeatherData {
     windspeed: number;
     condition: WeatherCondition;
   };
-  forecast?: DailyForecast[] | RawForecastObject;
+  forecast_daily_raw?: string; // Changed from forecast
 }
 
 export interface NotificationLog {
