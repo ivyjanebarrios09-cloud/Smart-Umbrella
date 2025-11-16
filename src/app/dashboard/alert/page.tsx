@@ -31,30 +31,30 @@ import {
 } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
 import { collection } from 'firebase/firestore';
-import type { Umbrella } from '@/lib/types';
+import type { Device } from '@/lib/types';
 
 const alertFormSchema = z.object({
-  umbrellaId: z.string().min(1, 'Please select an umbrella.'),
+  deviceId: z.string().min(1, 'Please select a device.'),
 });
 
 type AlertFormValues = z.infer<typeof alertFormSchema>;
 
-export default function UmbrellaAlertPage() {
+export default function DeviceAlertPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
 
-  const umbrellasRef = useMemoFirebase(() => {
+  const devicesRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
-    return collection(firestore, `users/${user.uid}/umbrellas`);
+    return collection(firestore, `users/${user.uid}/devices`);
   }, [firestore, user]);
 
-  const { data: umbrellas, isLoading: areUmbrellasLoading } =
-    useCollection<Umbrella>(umbrellasRef);
+  const { data: devices, isLoading: areDevicesLoading } =
+    useCollection<Device>(devicesRef);
 
   const form = useForm<AlertFormValues>({
     resolver: zodResolver(alertFormSchema),
     defaultValues: {
-      umbrellaId: '',
+      deviceId: '',
     },
     mode: 'onChange',
   });
@@ -70,8 +70,8 @@ export default function UmbrellaAlertPage() {
         },
         body: JSON.stringify({
           userId: user.uid,
-          umbrellaId: data.umbrellaId,
-          message: 'I think I left my umbrella behind!',
+          deviceId: data.deviceId,
+          message: 'I think I left my device behind!',
           type: 'left_behind',
         }),
       });
@@ -96,7 +96,7 @@ export default function UmbrellaAlertPage() {
     }
   }
 
-  if (isUserLoading || areUmbrellasLoading) {
+  if (isUserLoading || areDevicesLoading) {
     return (
       <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-xl">Loading...</div>
@@ -116,9 +116,9 @@ export default function UmbrellaAlertPage() {
         </Link>
         <Card>
           <CardHeader>
-            <CardTitle>Umbrella Alert</CardTitle>
+            <CardTitle>Device Alert</CardTitle>
             <CardDescription>
-              Select an umbrella to report it as missing. This will log a "left-behind" alert in your notification history.
+              Select a device to report it as missing. This will log a "left-behind" alert in your notification history.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -126,29 +126,29 @@ export default function UmbrellaAlertPage() {
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 <FormField
                   control={form.control}
-                  name="umbrellaId"
+                  name="deviceId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Select Umbrella</FormLabel>
+                      <FormLabel>Select Device</FormLabel>
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select the missing umbrella" />
+                            <SelectValue placeholder="Select the missing device" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {umbrellas && umbrellas.length > 0 ? (
-                            umbrellas.map((umbrella) => (
-                              <SelectItem key={umbrella.id} value={umbrella.id}>
-                                {umbrella.name}
+                          {devices && devices.length > 0 ? (
+                            devices.map((device) => (
+                              <SelectItem key={device.id} value={device.id}>
+                                {device.name}
                               </SelectItem>
                             ))
                           ) : (
                             <SelectItem value="none" disabled>
-                              No umbrellas found. Add one in settings.
+                              No devices found. Add one in settings.
                             </SelectItem>
                           )}
                         </SelectContent>
@@ -157,7 +157,7 @@ export default function UmbrellaAlertPage() {
                     </FormItem>
                   )}
                 />
-                <Button type="submit" disabled={!umbrellas || umbrellas.length === 0}>
+                <Button type="submit" disabled={!devices || devices.length === 0}>
                   <Send className="mr-2 h-4 w-4" />
                   Send Missing Alert
                 </Button>

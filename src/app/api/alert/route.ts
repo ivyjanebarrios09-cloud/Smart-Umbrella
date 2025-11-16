@@ -9,7 +9,7 @@ import { z } from 'zod';
 // Zod schema for request validation
 const alertSchema = z.object({
   userId: z.string().min(1, { message: 'User ID is required.' }),
-  umbrellaId: z.string().min(1, { message: 'Umbrella ID is required.' }),
+  deviceId: z.string().min(1, { message: 'Device ID is required.' }),
   message: z.string().min(1, { message: 'Message is required.' }),
   type: z.string().default('left_behind'),
   fcmToken: z.string().optional(), // fcmToken is optional but recommended
@@ -39,14 +39,14 @@ export async function POST(request: Request) {
       );
     }
 
-    const { userId, umbrellaId, type, message, fcmToken } = parsedData.data;
+    const { userId, deviceId, type, message, fcmToken } = parsedData.data;
 
     // 1. Create a new notification log entry
     const newLogRef = db.collection(`users/${userId}/notification_logs`).doc();
     const newLog = {
       id: newLogRef.id,
       userId,
-      umbrellaId,
+      deviceId,
       type,
       message,
       timestamp: Timestamp.now(), // Use Firestore Timestamp
@@ -59,7 +59,7 @@ export async function POST(request: Request) {
       const payload: admin.messaging.Message = {
         token: fcmToken,
         notification: {
-          title: 'Umbrella Left Behind!',
+          title: 'Device Left Behind!',
           body: message,
         },
         webpush: {

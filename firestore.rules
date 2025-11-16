@@ -1,5 +1,5 @@
 /**
- * @fileoverview Firestore Security Rules for the Umbrella App.
+ * @fileoverview Firestore Security Rules for the Smart Umbrella Tracker App.
  *
  * Core Philosophy:
  * This ruleset enforces a strict user-ownership model for all data. Each user can only
@@ -8,7 +8,7 @@
  *
  * Data Structure:
  * - `/users/{userId}`: Stores user profiles. Only accessible by the user themselves.
- * - `/users/{userId}/umbrellas/{umbrellaId}`: Stores umbrellas owned by a user.
+ * - `/users/{userId}/devices/{deviceId}`: Stores devices owned by a user.
  * - `/users/{userId}/notification_logs/{notificationLogId}`: Stores notification logs for a user.
  * - `/users/{userId}/weather_alert_preferences/{weatherAlertPreferenceId}`: Stores weather alert preferences for a user.
  * - `/weather/{doc}`: Stores public weather data. Readable by any authenticated user.
@@ -16,7 +16,7 @@
  * Key Security Decisions:
  * - User listing is disallowed to prevent data leaks.
  * - Data is denormalized to avoid costly `get()` calls in security rules.  For example,
- *   the `userId` is included in the Umbrella, NotificationLog, and WeatherAlertPreference
+ *   the `userId` is included in the Device, NotificationLog, and WeatherAlertPreference
  *   documents to allow direct ownership checks.
  * - The rules explicitly deny any operation not specifically allowed.
  * - Authorization relies exclusively on the `request.auth` object, ensuring that all
@@ -63,123 +63,99 @@ service cloud.firestore {
       allow list: if false; // Listing users is not permitted.
       allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(userId);
-    }
 
-    /**
-     * @description Enforces user-level access control for umbrellas.
-     * @path /users/{userId}/umbrellas/{umbrellaId}
-     * @allow (create) User with ID 'user123' can create an umbrella for themselves.
-     *   - auth.uid: 'user123'
-     *   - request.resource.data.userId: 'user123'
-     * @deny (create) User with ID 'user123' cannot create an umbrella for another user.
-     *   - auth.uid: 'user123'
-     *   - request.resource.data.userId: 'user456'
-     * @allow (get) User with ID 'user123' can read their own umbrella.
-     *   - auth.uid: 'user123'
-     * @deny (get) User with ID 'user123' cannot read another user's umbrella.
-     *   - auth.uid: 'user456'
-     * @allow (update) User with ID 'user123' can update their own umbrella.
-     *   - auth.uid: 'user123'
-     * @deny (update) User with ID 'user123' cannot update another user's umbrella.
-     *   - auth.uid: 'user456'
-     * @allow (delete) User with ID 'user123' can delete their own umbrella.
-     *   - auth.uid: 'user123'
-     * @deny (delete) User with ID 'user123' cannot delete another user's umbrella.
-     *   - auth.uid: 'user456'
-     * @principle Enforces document ownership for writes.
-     */
-    match /users/{userId}/umbrellas/{umbrellaId} {
-      function isOwner(userId) {
-        return request.auth.uid == userId;
+      /**
+       * @description Enforces user-level access control for devices.
+       * @path /users/{userId}/devices/{deviceId}
+       * @allow (create) User with ID 'user123' can create a device for themselves.
+       *   - auth.uid: 'user123'
+       *   - request.resource.data.userId: 'user123'
+       * @deny (create) User with ID 'user123' cannot create a device for another user.
+       *   - auth.uid: 'user123'
+       *   - request.resource.data.userId: 'user456'
+       * @allow (get) User with ID 'user123' can read their own device.
+       *   - auth.uid: 'user123'
+       * @deny (get) User with ID 'user123' cannot read another user's device.
+       *   - auth.uid: 'user456'
+       * @allow (update) User with ID 'user123' can update their own device.
+       *   - auth.uid: 'user123'
+       * @deny (update) User with ID 'user123' cannot update another user's device.
+       *   - auth.uid: 'user456'
+       * @allow (delete) User with ID 'user123' can delete their own device.
+       *   - auth.uid: 'user123'
+       * @deny (delete) User with ID 'user123' cannot delete another user's device.
+       *   - auth.uid: 'user456'
+       * @principle Enforces document ownership for writes.
+       */
+      match /devices/{deviceId} {
+        allow create: if isOwner(userId) && request.resource.data.userId == userId;
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+        allow delete: if isExistingOwner(userId);
       }
 
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
+      /**
+       * @description Enforces user-level access control for notification logs.
+       * @path /users/{userId}/notification_logs/{notificationLogId}
+       * @allow (create) User with ID 'user123' can create a notification log for themselves.
+       *   - auth.uid: 'user123'
+       *   - request.resource.data.userId: 'user123'
+       * @deny (create) User with ID 'user123' cannot create a notification log for another user.
+       *   - auth.uid: 'user123'
+       *   - request.resource.data.userId: 'user456'
+       * @allow (get) User with ID 'user123' can read their own notification log.
+       *   - auth.uid: 'user123'
+       * @deny (get) User with ID 'user123' cannot read another user's notification log.
+       *   - auth.uid: 'user456'
+       * @allow (update) User with ID 'user123' can update their own notification log.
+       *   - auth.uid: 'user123'
+       * @deny (update) User with ID 'user123' cannot update another user's notification log.
+       *   - auth.uid: 'user456'
+       * @allow (delete) User with ID 'user123' can delete their own notification log.
+       *   - auth.uid: 'user123'
+       * @deny (delete) User with ID 'user123' cannot delete another user's notification log.
+       *   - auth.uid: 'user456'
+       * @principle Enforces document ownership for writes.
+       */
+      match /notification_logs/{notificationLogId} {
+        allow create: if isOwner(userId) && request.resource.data.userId == userId;
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+        allow delete: if isExistingOwner(userId);
       }
 
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description Enforces user-level access control for notification logs.
-     * @path /users/{userId}/notification_logs/{notificationLogId}
-     * @allow (create) User with ID 'user123' can create a notification log for themselves.
-     *   - auth.uid: 'user123'
-     *   - request.resource.data.userId: 'user123'
-     * @deny (create) User with ID 'user123' cannot create a notification log for another user.
-     *   - auth.uid: 'user123'
-     *   - request.resource.data.userId: 'user456'
-     * @allow (get) User with ID 'user123' can read their own notification log.
-     *   - auth.uid: 'user123'
-     * @deny (get) User with ID 'user123' cannot read another user's notification log.
-     *   - auth.uid: 'user456'
-     * @allow (update) User with ID 'user123' can update their own notification log.
-     *   - auth.uid: 'user123'
-     * @deny (update) User with ID 'user123' cannot update another user's notification log.
-     *   - auth.uid: 'user456'
-     * @allow (delete) User with ID 'user123' can delete their own notification log.
-     *   - auth.uid: 'user123'
-     * @deny (delete) User with ID 'user123' cannot delete another user's notification log.
-     *   - auth.uid: 'user456'
-     * @principle Enforces document ownership for writes.
-     */
-    match /users/{userId}/notification_logs/{notificationLogId} {
-      function isOwner(userId) {
-        return request.auth.uid == userId;
+      /**
+       * @description Enforces user-level access control for weather alert preferences.
+       * @path /users/{userId}/weather_alert_preferences/{weatherAlertPreferenceId}
+       * @allow (create) User with ID 'user123' can create weather alert preferences for themselves.
+       *   - auth.uid: 'user123'
+       *   - request.resource.data.userId: 'user123'
+       * @deny (create) User with ID 'user123' cannot create weather alert preferences for another user.
+       *   - auth.uid: 'user123'
+       *   - request.resource.data.userId: 'user456'
+       * @allow (get) User with ID 'user123' can read their own weather alert preferences.
+       *   - auth.uid: 'user123'
+       * @deny (get) User with ID 'user123' cannot read another user's weather alert preferences.
+       *   - auth.uid: 'user456'
+       * @allow (update) User with ID 'user123' can update their own weather alert preferences.
+       *   - auth.uid: 'user123'
+       * @deny (update) User with ID 'user123' cannot update another user's weather alert preferences.
+       *   - auth.uid: 'user456'
+       * @allow (delete) User with ID 'user123' can delete their own weather alert preferences.
+       *   - auth.uid: 'user123'
+       * @deny (delete) User with ID 'user123' cannot delete another user's weather alert preferences.
+       *   - auth.uid: 'user456'
+       * @principle Enforces document ownership for writes.
+       */
+      match /weather_alert_preferences/{weatherAlertPreferenceId} {
+        allow create: if isOwner(userId) && request.resource.data.userId == userId;
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+        allow delete: if isExistingOwner(userId);
       }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description Enforces user-level access control for weather alert preferences.
-     * @path /users/{userId}/weather_alert_preferences/{weatherAlertPreferenceId}
-     * @allow (create) User with ID 'user123' can create weather alert preferences for themselves.
-     *   - auth.uid: 'user123'
-     *   - request.resource.data.userId: 'user123'
-     * @deny (create) User with ID 'user123' cannot create weather alert preferences for another user.
-     *   - auth.uid: 'user123'
-     *   - request.resource.data.userId: 'user456'
-     * @allow (get) User with ID 'user123' can read their own weather alert preferences.
-     *   - auth.uid: 'user123'
-     * @deny (get) User with ID 'user123' cannot read another user's weather alert preferences.
-     *   - auth.uid: 'user456'
-     * @allow (update) User with ID 'user123' can update their own weather alert preferences.
-     *   - auth.uid: 'user123'
-     * @deny (update) User with ID 'user123' cannot update another user's weather alert preferences.
-     *   - auth.uid: 'user456'
-     * @allow (delete) User with ID 'user123' can delete their own weather alert preferences.
-     *   - auth.uid: 'user123'
-     * @deny (delete) User with ID 'user123' cannot delete another user's weather alert preferences.
-     *   - auth.uid: 'user456'
-     * @principle Enforces document ownership for writes.
-     */
-    match /users/{userId}/weather_alert_preferences/{weatherAlertPreferenceId} {
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-      allow delete: if isExistingOwner(userId);
     }
     
     /**

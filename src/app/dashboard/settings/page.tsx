@@ -25,7 +25,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
-import type { Umbrella } from '@/lib/types';
+import type { Device } from '@/lib/types';
 import { Input } from "@/components/ui/input";
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -41,12 +41,12 @@ import {
 import { toast } from '@/hooks/use-toast';
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
-const newUmbrellaFormSchema = z.object({
+const newDeviceFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   deviceId: z.string().min(1, { message: "Device ID is required." }),
 });
 
-type NewUmbrellaFormValues = z.infer<typeof newUmbrellaFormSchema>;
+type NewDeviceFormValues = z.infer<typeof newDeviceFormSchema>;
 
 
 export default function SettingsPage() {
@@ -55,31 +55,31 @@ export default function SettingsPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
 
-  const umbrellasRef = useMemoFirebase(() => {
+  const devicesRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
-    return collection(firestore, `users/${user.uid}/umbrellas`);
+    return collection(firestore, `users/${user.uid}/devices`);
   }, [firestore, user]);
 
-  const { data: umbrellas, isLoading: areUmbrellasLoading } = useCollection<Umbrella>(umbrellasRef);
+  const { data: devices, isLoading: areDevicesLoading } = useCollection<Device>(devicesRef);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast({ title: "Copied to clipboard!" });
   };
   
-  const form = useForm<NewUmbrellaFormValues>({
-    resolver: zodResolver(newUmbrellaFormSchema),
+  const form = useForm<NewDeviceFormValues>({
+    resolver: zodResolver(newDeviceFormSchema),
     defaultValues: {
       name: '',
       deviceId: '',
     },
   });
 
-  async function onSubmit(data: NewUmbrellaFormValues) {
-    if (!user || !umbrellasRef) return;
+  async function onSubmit(data: NewDeviceFormValues) {
+    if (!user || !devicesRef) return;
 
     try {
-      addDocumentNonBlocking(umbrellasRef, {
+      addDocumentNonBlocking(devicesRef, {
         name: data.name,
         deviceId: data.deviceId,
         userId: user.uid,
@@ -89,16 +89,16 @@ export default function SettingsPage() {
       });
 
       toast({
-        title: "Umbrella Registered",
+        title: "Device Registered",
         description: `"${data.name}" has been added.`,
       });
       form.reset();
     } catch (error) {
-      console.error("Error registering new umbrella:", error);
+      console.error("Error registering new device:", error);
       toast({
         variant: "destructive",
         title: "Registration Failed",
-        description: "Could not register the new umbrella.",
+        description: "Could not register the new device.",
       });
     }
   }
@@ -172,9 +172,9 @@ export default function SettingsPage() {
           
           <Card>
             <CardHeader>
-              <CardTitle>Register New Umbrella</CardTitle>
+              <CardTitle>Register New Device</CardTitle>
               <CardDescription>
-                Provide a name and device ID to register your new umbrella.
+                Provide a name and device ID to register your new device.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -185,9 +185,9 @@ export default function SettingsPage() {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Umbrella Name</FormLabel>
+                        <FormLabel>Device Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g., My Blue Umbrella" {...field} />
+                          <Input placeholder="e.g., My Smart Device" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -206,7 +206,7 @@ export default function SettingsPage() {
                       </FormItem>
                     )}
                   />
-                  <Button type="submit">Register Umbrella</Button>
+                  <Button type="submit">Register Device</Button>
                 </form>
               </Form>
             </CardContent>
@@ -224,23 +224,23 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
-                <Label>Registered Umbrellas</Label>
-                {isUserLoading || areUmbrellasLoading ? (
-                   <p className="text-sm text-muted-foreground">Loading umbrellas...</p>
-                ) : umbrellas && umbrellas.length > 0 ? (
+                <Label>Registered Devices</Label>
+                {isUserLoading || areDevicesLoading ? (
+                   <p className="text-sm text-muted-foreground">Loading devices...</p>
+                ) : devices && devices.length > 0 ? (
                   <div className="space-y-4">
-                    {umbrellas.map(umbrella => (
-                      <div key={umbrella.id} className="space-y-2">
-                        <p className="text-sm font-medium">{umbrella.name}</p>
+                    {devices.map(device => (
+                      <div key={device.id} className="space-y-2">
+                        <p className="text-sm font-medium">{device.name}</p>
                          <div className="flex gap-2">
-                            <Input id={`deviceId-${umbrella.id}`} value={umbrella.deviceId || 'N/A'} readOnly />
-                            <Button variant="outline" onClick={() => copyToClipboard(umbrella.deviceId || '')}>Copy ID</Button>
+                            <Input id={`deviceId-${device.id}`} value={device.deviceId || 'N/A'} readOnly />
+                            <Button variant="outline" onClick={() => copyToClipboard(device.deviceId || '')}>Copy ID</Button>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">No umbrellas registered for this user.</p>
+                  <p className="text-sm text-muted-foreground">No devices registered for this user.</p>
                 )}
               </div>
             </CardContent>

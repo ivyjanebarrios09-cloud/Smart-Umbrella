@@ -37,14 +37,14 @@ export interface WeatherData {
 export interface NotificationLog {
     id: string;
     userId: string;
-    umbrellaId?: string;
+    deviceId?: string;
     type: 'left_behind' | 'weather_alert' | string;
     message: string;
     timestamp: Timestamp;
 }
 
 
-export interface Umbrella {
+export interface Device {
   id: string;
   name: string;
   deviceId: string;
