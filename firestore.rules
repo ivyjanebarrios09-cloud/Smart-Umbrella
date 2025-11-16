@@ -88,11 +88,7 @@ service cloud.firestore {
        * @principle Enforces document ownership for writes.
        */
       match /devices/{deviceId} {
-        allow create: if isOwner(userId) && request.resource.data.userId == userId;
-        allow get: if isOwner(userId);
-        allow list: if isOwner(userId);
-        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-        allow delete: if isExistingOwner(userId);
+        allow read, write: if isOwner(userId);
       }
 
       /**
@@ -119,11 +115,7 @@ service cloud.firestore {
        * @principle Enforces document ownership for writes.
        */
       match /notification_logs/{notificationLogId} {
-        allow create: if isOwner(userId) && request.resource.data.userId == userId;
-        allow get: if isOwner(userId);
-        allow list: if isOwner(userId);
-        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-        allow delete: if isExistingOwner(userId);
+         allow read, write: if isOwner(userId);
       }
 
       /**
@@ -150,11 +142,7 @@ service cloud.firestore {
        * @principle Enforces document ownership for writes.
        */
       match /weather_alert_preferences/{weatherAlertPreferenceId} {
-        allow create: if isOwner(userId) && request.resource.data.userId == userId;
-        allow get: if isOwner(userId);
-        allow list: if isOwner(userId);
-        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-        allow delete: if isExistingOwner(userId);
+         allow read, write: if isOwner(userId);
       }
       
       /**
@@ -162,11 +150,7 @@ service cloud.firestore {
        * @path /users/{userId}/umbrellaActivity/{activityId}
        */
       match /umbrellaActivity/{activityId} {
-        allow create: if isOwner(userId);
-        allow get: if isOwner(userId);
-        allow list: if isOwner(userId);
-        allow update: if isExistingOwner(userId);
-        allow delete: if isExistingOwner(userId);
+        allow read, write: if isOwner(userId);
       }
     }
     
@@ -182,5 +166,3 @@ service cloud.firestore {
     }
   }
 }
-
-    
