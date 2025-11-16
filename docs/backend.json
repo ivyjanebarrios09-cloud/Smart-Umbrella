@@ -47,10 +47,6 @@
           "type": "string",
           "description": "A descriptive name for the umbrella (e.g., 'My Blue Umbrella')."
         },
-        "bleDeviceId": {
-          "type": "string",
-          "description": "The Bluetooth Low Energy (BLE) device ID of the umbrella's smart chip."
-        },
         "ledEnabled": {
           "type": "boolean",
           "description": "Indicates whether the LED in the umbrella handle is enabled."
@@ -67,7 +63,6 @@
       "required": [
         "id",
         "userId",
-        "bleDeviceId",
         "ledEnabled",
         "leftBehindNotificationEnabled",
         "leftBehindDistance"

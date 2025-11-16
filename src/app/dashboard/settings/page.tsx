@@ -43,7 +43,6 @@ import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 const newUmbrellaFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  bleDeviceId: z.string().min(1, { message: "Device ID is required." }),
 });
 
 type NewUmbrellaFormValues = z.infer<typeof newUmbrellaFormSchema>;
@@ -70,7 +69,6 @@ export default function SettingsPage() {
     resolver: zodResolver(newUmbrellaFormSchema),
     defaultValues: {
       name: '',
-      bleDeviceId: '',
     },
   });
 
@@ -81,7 +79,6 @@ export default function SettingsPage() {
       addDocumentNonBlocking(umbrellasRef, {
         name: data.name,
         userId: user.uid,
-        bleDeviceId: data.bleDeviceId,
         ledEnabled: false, // Default value
         leftBehindNotificationEnabled: true, // Default value
         leftBehindDistance: 10, // Default value in meters
@@ -173,7 +170,7 @@ export default function SettingsPage() {
             <CardHeader>
               <CardTitle>Register New Umbrella</CardTitle>
               <CardDescription>
-                Give your new umbrella a name and enter its device ID to register it.
+                Give your new umbrella a name to register it.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -187,19 +184,6 @@ export default function SettingsPage() {
                         <FormLabel>Umbrella Name</FormLabel>
                         <FormControl>
                           <Input placeholder="e.g., My Blue Umbrella" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="bleDeviceId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Device ID</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter the BLE device ID" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
