@@ -4,7 +4,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
-import { ArrowLeft, Laptop, Moon, Sun, KeyRound } from "lucide-react";
+import { ArrowLeft, Laptop, Moon, Sun, KeyRound, CloudSync } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -23,9 +23,9 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, serverTimestamp } from 'firebase/firestore';
-import type { Device } from '@/lib/types';
+import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
+import { collection, serverTimestamp, doc, getDoc } from 'firebase/firestore';
+import type { Device, WeatherData } from '@/lib/types';
 import { Input } from "@/components/ui/input";
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -61,6 +61,8 @@ export default function SettingsPage() {
   }, [firestore, user]);
 
   const { data: devices, isLoading: areDevicesLoading } = useCollection<Device>(devicesRef);
+  
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -78,32 +80,73 @@ export default function SettingsPage() {
   async function onSubmit(data: NewDeviceFormValues) {
     if (!user || !devicesRef) return;
 
+    addDocumentNonBlocking(devicesRef, {
+      userId: user.uid,
+      metadata: {
+        name: data.name,
+        deviceId: data.deviceId,
+        model: 'UmbraGuard v1',
+        createdAt: serverTimestamp(),
+      },
+      ledEnabled: false,
+      leftBehindNotificationEnabled: true,
+    });
+
+    toast({
+      title: "Device Registered",
+      description: `"${data.name}" has been added.`,
+    });
+    form.reset();
+  }
+  
+  const handleSyncWeather = async () => {
+    if (!user || !firestore) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'You must be logged in to sync weather.',
+      });
+      return;
+    }
+    
+    setIsSyncing(true);
+
     try {
-      addDocumentNonBlocking(devicesRef, {
-        userId: user.uid,
-        metadata: {
-          name: data.name,
-          deviceId: data.deviceId,
-          createdAt: serverTimestamp(),
-        },
-        ledEnabled: false,
-        leftBehindNotificationEnabled: true,
+      const weatherDocRef = doc(firestore, 'weather/current');
+      const weatherSnap = await getDoc(weatherDocRef);
+      
+      if (!weatherSnap.exists()) {
+        throw new Error("Could not find current weather data to sync.");
+      }
+
+      const weatherData = weatherSnap.data() as WeatherData;
+      
+      const userWeatherColRef = collection(firestore, `users/${user.uid}/weather`);
+      
+      // Use the existing weather data, but add a sync timestamp
+      const dataToSave = {
+        ...weatherData,
+        syncedAt: serverTimestamp()
+      };
+
+      addDocumentNonBlocking(userWeatherColRef, dataToSave);
+      
+      toast({
+        title: 'Weather Synced!',
+        description: 'The latest weather data has been saved to your profile.',
       });
 
+    } catch (error: any) {
+      console.error('Error syncing weather data:', error);
       toast({
-        title: "Device Registered",
-        description: `"${data.name}" has been added.`,
+        variant: 'destructive',
+        title: 'Sync Failed',
+        description: error.message || 'Could not sync weather data.',
       });
-      form.reset();
-    } catch (error) {
-      console.error("Error registering new device:", error);
-      toast({
-        variant: "destructive",
-        title: "Registration Failed",
-        description: "Could not register the new device.",
-      });
+    } finally {
+      setIsSyncing(false);
     }
-  }
+  };
 
 
   return (
@@ -167,6 +210,23 @@ export default function SettingsPage() {
                     checked={leftBehindAlert}
                     onCheckedChange={setLeftBehindAlert}
                   />
+                </div>
+              </div>
+              
+              <Separator />
+              
+              {/* Data Sync */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Data Management</h3>
+                 <div className="flex items-center justify-between p-4 rounded-lg border">
+                  <div>
+                    <Label className="font-medium">Sync Weather Data</Label>
+                    <p className="text-sm text-muted-foreground">Manually save the latest weather data to your account.</p>
+                  </div>
+                  <Button onClick={handleSyncWeather} disabled={isSyncing}>
+                    <CloudSync className="mr-2 h-4 w-4" />
+                    {isSyncing ? "Syncing..." : "Sync Now"}
+                  </Button>
                 </div>
               </div>
             </CardContent>
@@ -252,5 +312,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-    

@@ -1,3 +1,4 @@
+
 'use client';
     
 import {
@@ -47,6 +48,8 @@ export function addDocumentNonBlocking(colRef: CollectionReference, data: any) {
           requestResourceData: data,
         })
       )
+      // Also re-throw the original error so the caller can see it if they choose to await
+      throw error;
     });
   return promise;
 }
