@@ -23,14 +23,12 @@ export interface WeatherData {
   latitude: number;
   longitude: number;
   location_str: string;
-  timestamp_ms: number;
-  time_str?: string;
-  current?: {
-    temperature: number;
-    windspeed: number;
-    condition: WeatherCondition;
-    weathercode: number;
-  };
+  time?: string;
+  updatedAt?: number | Timestamp;
+  temperature?: number;
+  windspeed?: number;
+  condition?: WeatherCondition;
+  weathercode?: number;
   forecast_daily_raw?: string;
 }
 
@@ -75,5 +73,7 @@ export interface UmbrellaActivity {
   location?: string;
   time: string;
 }
+
+    
 
     

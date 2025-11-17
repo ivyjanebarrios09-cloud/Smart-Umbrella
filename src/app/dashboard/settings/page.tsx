@@ -39,7 +39,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { toast } from '@/hooks/use-toast';
-import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 const newDeviceFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -121,15 +121,14 @@ export default function SettingsPage() {
 
       const weatherData = weatherSnap.data() as WeatherData;
       
-      const userWeatherColRef = collection(firestore, `users/${user.uid}/weather`);
+      const userWeatherDocRef = doc(firestore, `users/${user.uid}/weather/latest`);
       
-      // Use the existing weather data, but add a sync timestamp
       const dataToSave = {
         ...weatherData,
         syncedAt: serverTimestamp()
       };
 
-      addDocumentNonBlocking(userWeatherColRef, dataToSave);
+      setDocumentNonBlocking(userWeatherDocRef, dataToSave, { merge: true });
       
       toast({
         title: 'Weather Synced!',
@@ -312,3 +311,5 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+    
