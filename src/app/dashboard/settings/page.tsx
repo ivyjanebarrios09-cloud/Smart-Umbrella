@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState } from "react";
@@ -24,7 +25,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, serverTimestamp, doc, getDoc } from 'firebase/firestore';
+import { collection, doc, getDoc } from 'firebase/firestore';
 import type { Device, WeatherData } from '@/lib/types';
 import { Input } from "@/components/ui/input";
 import { useForm } from 'react-hook-form';
@@ -39,7 +40,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { toast } from '@/hooks/use-toast';
-import { addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 const newDeviceFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -86,7 +87,7 @@ export default function SettingsPage() {
         name: data.name,
         deviceId: data.deviceId,
         model: 'UmbraGuard v1',
-        createdAt: serverTimestamp(),
+        createdAt: new Date(),
       },
       ledEnabled: false,
       leftBehindNotificationEnabled: true,
@@ -129,7 +130,7 @@ export default function SettingsPage() {
         longitude: sourceData.longitude,
         location_str: sourceData.location_str,
         time: sourceData.time,
-        updatedAt: serverTimestamp(),
+        updatedAt: new Date(),
         temperature: sourceData.current?.temperature ?? 0,
         windspeed: sourceData.current?.windspeed ?? 0,
         condition: sourceData.current?.condition ?? "Cloudy",
