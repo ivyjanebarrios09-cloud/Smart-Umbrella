@@ -121,10 +121,10 @@ export default function SettingsPage() {
 
       const sourceData = weatherSnap.data() as WeatherData;
       
-      const userWeatherDocRef = doc(firestore, `users/${user.uid}/weather/latest`);
+      const userWeatherCollectionRef = collection(firestore, `users/${user.uid}/weather`);
       
       // Transform the data to the flat structure before saving
-      const dataToSave: Omit<WeatherData, 'current'> = {
+      const dataToSave: Omit<WeatherData, 'current' | 'id'> = {
         latitude: sourceData.latitude,
         longitude: sourceData.longitude,
         location_str: sourceData.location_str,
@@ -137,7 +137,7 @@ export default function SettingsPage() {
         forecast_daily_raw: sourceData.forecast_daily_raw,
       };
 
-      setDocumentNonBlocking(userWeatherDocRef, dataToSave, { merge: true });
+      await addDocumentNonBlocking(userWeatherCollectionRef, dataToSave);
       
       toast({
         title: 'Weather Synced!',
@@ -320,7 +320,5 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-    
 
     
