@@ -119,13 +119,22 @@ export default function SettingsPage() {
         throw new Error("Could not find current weather data to sync.");
       }
 
-      const weatherData = weatherSnap.data() as WeatherData;
+      const sourceData = weatherSnap.data() as WeatherData;
       
       const userWeatherDocRef = doc(firestore, `users/${user.uid}/weather/latest`);
       
-      const dataToSave = {
-        ...weatherData,
-        syncedAt: serverTimestamp()
+      // Transform the data to the flat structure before saving
+      const dataToSave: Omit<WeatherData, 'current'> = {
+        latitude: sourceData.latitude,
+        longitude: sourceData.longitude,
+        location_str: sourceData.location_str,
+        time: sourceData.time,
+        updatedAt: serverTimestamp(),
+        temperature: sourceData.current?.temperature,
+        windspeed: sourceData.current?.windspeed,
+        condition: sourceData.current?.condition,
+        weathercode: sourceData.current?.weathercode,
+        forecast_daily_raw: sourceData.forecast_daily_raw,
       };
 
       setDocumentNonBlocking(userWeatherDocRef, dataToSave, { merge: true });

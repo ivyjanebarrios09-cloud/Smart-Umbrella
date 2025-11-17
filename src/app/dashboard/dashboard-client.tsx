@@ -96,9 +96,9 @@ export function DashboardClient() {
   }, [latestWeather]);
 
 
-  const currentTemperature = latestWeather?.current?.temperature;
-  const currentWindspeed = latestWeather?.current?.windspeed;
-  const currentConditionName = latestWeather?.current?.condition ?? 'Cloudy';
+  const currentTemperature = latestWeather?.temperature;
+  const currentWindspeed = latestWeather?.windspeed;
+  const currentConditionName = latestWeather?.condition ?? 'Cloudy';
   const displayCondition = weatherConditions[currentConditionName];
 
   const mapSrc = useMemo(() => {

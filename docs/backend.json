@@ -281,6 +281,7 @@
         "forecast_daily_raw": { "type": "string" },
         "current": {
           "type": "object",
+          "description": "This nested object is expected in the public /weather/current document, but user-specific weather data is flattened.",
           "properties": {
             "temperature": { "type": "number" },
             "windspeed": { "type": "number" },

@@ -30,6 +30,8 @@ export interface WeatherData {
   condition?: WeatherCondition;
   weathercode?: number;
   forecast_daily_raw?: string;
+  // The 'current' object is for the source public /weather/current doc,
+  // but user-specific weather data is flattened.
   current?: {
     temperature: number;
     windspeed: number;
