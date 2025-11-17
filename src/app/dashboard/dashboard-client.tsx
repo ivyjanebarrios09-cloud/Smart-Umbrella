@@ -19,8 +19,8 @@ import {
   Thermometer,
   Wind,
 } from 'lucide-react';
-import { useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
+import { collection, query, orderBy, limit } from 'firebase/firestore';
 import { WeatherData, WeatherCondition, DailyForecast } from '@/lib/types';
 import Link from 'next/link';
 
@@ -59,13 +59,19 @@ export function DashboardClient() {
   const firestore = useFirestore();
   const { user } = useUser();
 
-  const weatherDocRef = useMemoFirebase(() => {
+  const weatherQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
-    return doc(firestore, `users/${user.uid}/weather/latest`);
+    return query(
+      collection(firestore, `users/${user.uid}/weather`),
+      orderBy('updatedAt', 'desc'),
+      limit(1)
+    );
   }, [firestore, user]);
 
-  const { data: latestWeather, isLoading: isWeatherLoading } =
-    useDoc<WeatherData>(weatherDocRef);
+  const { data: weatherData, isLoading: isWeatherLoading } =
+    useCollection<WeatherData>(weatherQuery);
+
+  const latestWeather = useMemo(() => (weatherData && weatherData.length > 0 ? weatherData[0] : null), [weatherData]);
 
   const forecastArray: DailyForecast[] | null = useMemo(() => {
     if (!latestWeather?.forecast_daily_raw) return null;
