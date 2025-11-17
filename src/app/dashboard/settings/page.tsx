@@ -130,10 +130,10 @@ export default function SettingsPage() {
         location_str: sourceData.location_str,
         time: sourceData.time,
         updatedAt: serverTimestamp(),
-        temperature: sourceData.current?.temperature,
-        windspeed: sourceData.current?.windspeed,
-        condition: sourceData.current?.condition,
-        weathercode: sourceData.current?.weathercode,
+        temperature: sourceData.current?.temperature ?? 0,
+        windspeed: sourceData.current?.windspeed ?? 0,
+        condition: sourceData.current?.condition ?? "Cloudy",
+        weathercode: sourceData.current?.weathercode ?? 3,
         forecast_daily_raw: sourceData.forecast_daily_raw,
       };
 
@@ -320,5 +320,7 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+    
 
     
