@@ -274,10 +274,15 @@
         "location_str": { "type": "string" },
         "timestamp_ms": { "type": "number" },
         "time_str": { "type": "string" },
-        "temperature": { "type": "number" },
-        "windspeed": { "type": "number" },
-        "condition": { "type": "string" },
-        "weathercode": { "type": "number" },
+        "current": {
+          "type": "object",
+          "properties": {
+            "temperature": { "type": "number" },
+            "windspeed": { "type": "number" },
+            "condition": { "type": "string" },
+            "weathercode": { "type": "number" }
+          }
+        },
         "forecast_daily_raw": { "type": "string" }
       }
     }

@@ -25,10 +25,12 @@ export interface WeatherData {
   location_str: string;
   timestamp_ms: number;
   time_str?: string;
-  temperature: number;
-  windspeed: number;
-  condition?: WeatherCondition;
-  weathercode?: number;
+  current?: {
+    temperature: number;
+    windspeed: number;
+    condition: WeatherCondition;
+    weathercode: number;
+  };
   forecast_daily_raw?: string;
 }
 
