@@ -19,9 +19,9 @@ import {
   Thermometer,
   Wind,
 } from 'lucide-react';
-import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { collection, limit, query, doc } from 'firebase/firestore';
-import { WeatherCondition, Device, DailyForecast, WeatherData } from '@/lib/types';
+import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
+import { collection, limit, query } from 'firebase/firestore';
+import { WeatherCondition, Device, DailyForecast } from '@/lib/types';
 import Link from 'next/link';
 
 const weatherConditions: Record<
@@ -72,19 +72,11 @@ export function DashboardClient() {
     
   const device = devices?.[0];
 
-  const weatherDocRef = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return doc(firestore, 'weather/current');
-  }, [firestore]);
-
-  const { data: latestWeather, isLoading: isWeatherLoading } =
-    useDoc<WeatherData>(weatherDocRef);
-  
   const forecastArray: DailyForecast[] | null = useMemo(() => {
-    if (!latestWeather?.forecast_daily_raw) return null;
+    if (!device?.currentWeather?.forecast_daily_raw) return null;
 
     try {
-      const forecastData = JSON.parse(latestWeather.forecast_daily_raw);
+      const forecastData = JSON.parse(device.currentWeather.forecast_daily_raw);
       
       if (
         !forecastData.time ||
@@ -106,18 +98,19 @@ export function DashboardClient() {
       console.error("Failed to parse forecast JSON:", error);
       return null;
     }
-  }, [latestWeather]);
+  }, [device]);
 
-  const currentTemperature = device?.temperature;
-  const currentWindspeed = device?.windspeed;
-  const currentConditionName = device?.condition ?? 'Cloudy';
+  const currentTemperature = device?.currentWeather?.temperature;
+  const currentWindspeed = device?.currentWeather?.windspeed;
+  const currentConditionName = device?.currentWeather?.condition ?? 'Cloudy';
   const displayCondition = weatherConditions[currentConditionName];
-  const location = device?.location;
-  const time = device?.time;
+  const location = device?.currentWeather?.location_str;
+  const time = device?.currentWeather?.updatedAt?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || 'N/A';
+
 
   const mapSrc = useMemo(() => {
-    if (device?.latitude && device?.longitude) {
-      return `https://maps.google.com/maps?q=${device.latitude},${device.longitude}&hl=es;z=14&output=embed`;
+    if (device?.currentWeather?.latitude && device?.currentWeather?.longitude) {
+      return `https://maps.google.com/maps?q=${device.currentWeather.latitude},${device.currentWeather.longitude}&hl=es;z=14&output=embed`;
     }
     return '';
   }, [device]);
@@ -232,7 +225,7 @@ export function DashboardClient() {
           <CardDescription>Upcoming weather at a glance</CardDescription>
         </CardHeader>
         <CardContent>
-          {isWeatherLoading ? (
+          {areDevicesLoading ? (
             <div className="flex items-center justify-center h-48 text-muted-foreground">
               <p>Loading forecast...</p>
             </div>

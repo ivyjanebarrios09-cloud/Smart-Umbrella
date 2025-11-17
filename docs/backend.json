@@ -38,19 +38,72 @@
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the device."
-        },
-        "deviceId": {
-          "type": "string",
-          "description": "The unique device identifier for the device hardware."
+          "description": "Unique identifier for the device document."
         },
         "userId": {
           "type": "string",
-          "description": "Reference to User. (Relationship: User 1:N Device). The ID of the user who owns this device."
+          "description": "The ID of the user who owns this device."
         },
-        "name": {
-          "type": "string",
-          "description": "A descriptive name for the device (e.g., 'My Blue Device')."
+        "metadata": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "A descriptive name for the device (e.g., 'My Blue Device')."
+            },
+            "deviceId": {
+              "type": "string",
+              "description": "The unique hardware identifier for the device."
+            },
+            "model": {
+              "type": "string",
+              "description": "The model of the device."
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time",
+              "description": "The timestamp when the device was registered."
+            }
+          },
+          "required": ["name", "deviceId"]
+        },
+        "currentWeather": {
+          "type": "object",
+          "properties": {
+            "condition": {
+              "type": "string",
+              "description": "The last recorded weather condition from the device."
+            },
+            "temperature": {
+              "type": "number",
+              "description": "The last recorded temperature from the device."
+            },
+            "windspeed": {
+              "type": "number",
+              "description": "The last recorded windspeed from the device."
+            },
+            "location_str": {
+              "type": "string",
+              "description": "The last known location of the device as a string."
+            },
+            "latitude": {
+              "type": "number",
+              "description": "The last known latitude of the device."
+            },
+            "longitude": {
+              "type": "number",
+              "description": "The last known longitude of the device."
+            },
+            "forecast_daily_raw": {
+                "type": "string",
+                "description": "Raw JSON string for the daily forecast."
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time",
+              "description": "The timestamp of the last weather update."
+            }
+          }
         },
         "ledEnabled": {
           "type": "boolean",
@@ -59,48 +112,12 @@
         "leftBehindNotificationEnabled": {
           "type": "boolean",
           "description": "Indicates whether left-behind notifications are enabled for this device."
-        },
-        "leftBehindDistance": {
-          "type": "number",
-          "description": "The distance threshold (in meters) for a left-behind notification."
-        },
-        "location": {
-          "type": "string",
-          "description": "The last known location of the device as a string."
-        },
-        "time": {
-          "type": "string",
-          "description": "The time of the last reading."
-        },
-        "temperature": {
-          "type": "number",
-          "description": "The last recorded temperature from the device."
-        },
-        "windspeed": {
-          "type": "number",
-          "description": "The last recorded windspeed from the device."
-        },
-        "condition": {
-          "type": "string",
-          "description": "The last recorded weather condition from the device."
-        },
-        "latitude": {
-          "type": "number",
-          "description": "The last known latitude of the device."
-        },
-        "longitude": {
-          "type": "number",
-          "description": "The last known longitude of the device."
         }
       },
       "required": [
         "id",
-        "deviceId",
         "userId",
-        "name",
-        "ledEnabled",
-        "leftBehindNotificationEnabled",
-        "leftBehindDistance"
+        "metadata"
       ]
     },
     "NotificationLog": {
@@ -227,21 +244,24 @@
           "type": "string",
           "description": "Unique identifier for the activity log."
         },
-        "deviceId": {
-          "type": "string",
-          "description": "The ID of the device."
+        "condition": {
+          "type": "string"
         },
-        "timestamp": {
-          "type": "string",
-          "format": "date-time",
-          "description": "The time of the activity."
+        "temperature": {
+          "type": "number"
         },
-        "activityType": {
+        "windspeed": {
+          "type": "number"
+        },
+        "location": {
+          "type": "string"
+        },
+        "time": {
           "type": "string",
-          "description": "Type of activity (e.g., 'connected', 'disconnected', 'led_on')."
+          "format": "time"
         }
       },
-      "required": ["id", "deviceId", "timestamp", "activityType"]
+      "required": ["id", "time"]
     }
   },
   "auth": {
@@ -289,6 +309,30 @@
         }
       },
       {
+        "path": "/users/{userId}/devices/{deviceId}/umbrellaActivity/{activityId}",
+        "definition": {
+            "entityName": "UmbrellaActivity",
+            "schema": {
+                "$ref": "#/backend/entities/UmbrellaActivity"
+            },
+            "description": "Subcollection to store activity logs for a specific device.",
+            "params": [
+                {
+                    "name": "userId",
+                    "description": "The unique identifier of the user."
+                },
+                {
+                    "name": "deviceId",
+                    "description": "The unique identifier of the device."
+                },
+                {
+                    "name": "activityId",
+                    "description": "The unique identifier of the activity log entry."
+                }
+            ]
+        }
+      },
+      {
         "path": "/users/{userId}/notification_logs/{notificationLogId}",
         "definition": {
           "entityName": "NotificationLog",
@@ -324,26 +368,6 @@
             {
               "name": "weatherAlertPreferenceId",
               "description": "The unique identifier of the weather alert preference."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/umbrellaActivity/{activityId}",
-        "definition": {
-          "entityName": "UmbrellaActivity",
-          "schema": {
-            "$ref": "#/backend/entities/UmbrellaActivity"
-          },
-          "description": "Subcollection to store activity logs for a user's devices.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user."
-            },
-            {
-              "name": "activityId",
-              "description": "The unique identifier of the activity log entry."
             }
           ]
         }

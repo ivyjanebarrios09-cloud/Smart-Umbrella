@@ -46,24 +46,34 @@ export interface NotificationLog {
 
 export interface Device {
   id: string;
-  name: string;
-  deviceId: string;
-  location?: string;
-  time?: string;
-  temperature?: number;
-  windspeed?: number;
-  condition?: WeatherCondition;
-  latitude?: number;
-  longitude?: number;
+  userId: string;
+  metadata: {
+    name: string;
+    deviceId: string;
+    model?: string;
+    createdAt?: Timestamp;
+  };
+  currentWeather?: {
+    condition?: WeatherCondition;
+    temperature?: number;
+    windspeed?: number;
+    location_str?: string;
+    latitude?: number;
+    longitude?: number;
+    forecast_daily_raw?: string;
+    updatedAt?: Timestamp;
+  };
+  ledEnabled?: boolean;
+  leftBehindNotificationEnabled?: boolean;
 }
 
 export interface UmbrellaActivity {
   id: string;
-  deviceId: string;
-  timestamp: Timestamp;
-  activityType: string;
+  condition?: string;
+  temperature?: number;
+  windspeed?: number;
+  location?: string;
+  time: string;
 }
-
-    
 
     

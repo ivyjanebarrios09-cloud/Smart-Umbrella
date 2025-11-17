@@ -24,7 +24,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { collection, serverTimestamp } from 'firebase/firestore';
 import type { Device } from '@/lib/types';
 import { Input } from "@/components/ui/input";
 import { useForm } from 'react-hook-form';
@@ -80,12 +80,14 @@ export default function SettingsPage() {
 
     try {
       addDocumentNonBlocking(devicesRef, {
-        name: data.name,
-        deviceId: data.deviceId,
         userId: user.uid,
-        ledEnabled: false, // Default value
-        leftBehindNotificationEnabled: true, // Default value
-        leftBehindDistance: 10, // Default value in meters
+        metadata: {
+          name: data.name,
+          deviceId: data.deviceId,
+          createdAt: serverTimestamp(),
+        },
+        ledEnabled: false,
+        leftBehindNotificationEnabled: true,
       });
 
       toast({
@@ -231,10 +233,10 @@ export default function SettingsPage() {
                   <div className="space-y-4">
                     {devices.map(device => (
                       <div key={device.id} className="space-y-2">
-                        <p className="text-sm font-medium">{device.name}</p>
+                        <p className="text-sm font-medium">{device.metadata.name}</p>
                          <div className="flex gap-2">
-                            <Input id={`deviceId-${device.id}`} value={device.deviceId || 'N/A'} readOnly />
-                            <Button variant="outline" onClick={() => copyToClipboard(device.deviceId || '')}>Copy ID</Button>
+                            <Input id={`deviceId-${device.id}`} value={device.metadata.deviceId || 'N/A'} readOnly />
+                            <Button variant="outline" onClick={() => copyToClipboard(device.metadata.deviceId || '')}>Copy ID</Button>
                         </div>
                       </div>
                     ))}
@@ -250,3 +252,5 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+    

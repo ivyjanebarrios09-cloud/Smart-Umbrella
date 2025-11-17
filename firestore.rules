@@ -1,3 +1,4 @@
+
 /**
  * @fileoverview Firestore Security Rules for the Smart Umbrella Tracker App.
  *
@@ -9,6 +10,7 @@
  * Data Structure:
  * - `/users/{userId}`: Stores user profiles. Only accessible by the user themselves.
  * - `/users/{userId}/devices/{deviceId}`: Stores devices owned by a user.
+ * - `/users/{userId}/devices/{deviceId}/umbrellaActivity/{activityId}`: Activity log for a specific device.
  * - `/users/{userId}/notification_logs/{notificationLogId}`: Stores notification logs for a user.
  * - `/users/{userId}/weather_alert_preferences/{weatherAlertPreferenceId}`: Stores weather alert preferences for a user.
  * - `/weather/{doc}`: Stores public weather data. Readable by any authenticated user.
@@ -29,90 +31,33 @@ service cloud.firestore {
     /**
      * @description Enforces user-level access control for user profiles.
      * @path /users/{userId}
-     * @allow (create) User with ID 'user123' can create their own profile.
-     *   - auth.uid: 'user123'
-     *   - request.resource.data.id: 'user123'
-     * @deny (create) User with ID 'user123' cannot create a profile for another user.
-     *   - auth.uid: 'user123'
-     *   - request.resource.data.id: 'user456'
-     * @allow (get) User with ID 'user123' can read their own profile.
-     *   - auth.uid: 'user123'
-     * @deny (get) User with ID 'user123' cannot read another user's profile.
-     *   - auth.uid: 'user456'
-     * @allow (update) User with ID 'user123' can update their own profile.
-     *   - auth.uid: 'user123'
-     * @deny (update) User with ID 'user123' cannot update another user's profile.
-     *   - auth.uid: 'user456'
-     * @allow (delete) User with ID 'user123' can delete their own profile.
-     *   - auth.uid: 'user123'
-     * @deny (delete) User with ID 'user123' cannot delete another user's profile.
-     *   - auth.uid: 'user456'
-     * @principle Enforces document ownership for writes.
      */
     match /users/{userId} {
       function isOwner(userId) {
         return request.auth.uid == userId;
       }
 
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow get: if isOwner(userId);
-      allow list: if false; // Listing users is not permitted.
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
-      allow delete: if isExistingOwner(userId);
+      allow read, write: if isOwner(userId);
 
       /**
        * @description Enforces user-level access control for devices.
        * @path /users/{userId}/devices/{deviceId}
-       * @allow (create) User with ID 'user123' can create a device for themselves.
-       *   - auth.uid: 'user123'
-       *   - request.resource.data.userId: 'user123'
-       * @deny (create) User with ID 'user123' cannot create a device for another user.
-       *   - auth.uid: 'user123'
-       *   - request.resource.data.userId: 'user456'
-       * @allow (get) User with ID 'user123' can read their own device.
-       *   - auth.uid: 'user123'
-       * @deny (get) User with ID 'user123' cannot read another user's device.
-       *   - auth.uid: 'user456'
-       * @allow (update) User with ID 'user123' can update their own device.
-       *   - auth.uid: 'user123'
-       * @deny (update) User with ID 'user123' cannot update another user's device.
-       *   - auth.uid: 'user456'
-       * @allow (delete) User with ID 'user123' can delete their own device.
-       *   - auth.uid: 'user123'
-       * @deny (delete) User with ID 'user123' cannot delete another user's device.
-       *   - auth.uid: 'user456'
-       * @principle Enforces document ownership for writes.
        */
       match /devices/{deviceId} {
         allow read, write: if isOwner(userId);
+        
+        /**
+         * @description Enforces user-level access control for umbrella activity.
+         * @path /users/{userId}/devices/{deviceId}/umbrellaActivity/{activityId}
+         */
+        match /umbrellaActivity/{activityId} {
+            allow read, write: if isOwner(userId);
+        }
       }
 
       /**
        * @description Enforces user-level access control for notification logs.
        * @path /users/{userId}/notification_logs/{notificationLogId}
-       * @allow (create) User with ID 'user123' can create a notification log for themselves.
-       *   - auth.uid: 'user123'
-       *   - request.resource.data.userId: 'user123'
-       * @deny (create) User with ID 'user123' cannot create a notification log for another user.
-       *   - auth.uid: 'user123'
-       *   - request.resource.data.userId: 'user456'
-       * @allow (get) User with ID 'user123' can read their own notification log.
-       *   - auth.uid: 'user123'
-       * @deny (get) User with ID 'user123' cannot read another user's notification log.
-       *   - auth.uid: 'user456'
-       * @allow (update) User with ID 'user123' can update their own notification log.
-       *   - auth.uid: 'user123'
-       * @deny (update) User with ID 'user123' cannot update another user's notification log.
-       *   - auth.uid: 'user456'
-       * @allow (delete) User with ID 'user123' can delete their own notification log.
-       *   - auth.uid: 'user123'
-       * @deny (delete) User with ID 'user123' cannot delete another user's notification log.
-       *   - auth.uid: 'user456'
-       * @principle Enforces document ownership for writes.
        */
       match /notification_logs/{notificationLogId} {
          allow read, write: if isOwner(userId);
@@ -121,44 +66,15 @@ service cloud.firestore {
       /**
        * @description Enforces user-level access control for weather alert preferences.
        * @path /users/{userId}/weather_alert_preferences/{weatherAlertPreferenceId}
-       * @allow (create) User with ID 'user123' can create weather alert preferences for themselves.
-       *   - auth.uid: 'user123'
-       *   - request.resource.data.userId: 'user123'
-       * @deny (create) User with ID 'user123' cannot create weather alert preferences for another user.
-       *   - auth.uid: 'user123'
-       *   - request.resource.data.userId: 'user456'
-       * @allow (get) User with ID 'user123' can read their own weather alert preferences.
-       *   - auth.uid: 'user123'
-       * @deny (get) User with ID 'user123' cannot read another user's weather alert preferences.
-       *   - auth.uid: 'user456'
-       * @allow (update) User with ID 'user123' can update their own weather alert preferences.
-       *   - auth.uid: 'user123'
-       * @deny (update) User with ID 'user123' cannot update another user's weather alert preferences.
-       *   - auth.uid: 'user456'
-       * @allow (delete) User with ID 'user123' can delete their own weather alert preferences.
-       *   - auth.uid: 'user123'
-       * @deny (delete) User with ID 'user123' cannot delete another user's weather alert preferences.
-       *   - auth.uid: 'user456'
-       * @principle Enforces document ownership for writes.
        */
       match /weather_alert_preferences/{weatherAlertPreferenceId} {
          allow read, write: if isOwner(userId);
-      }
-      
-      /**
-       * @description Enforces user-level access control for umbrella activity.
-       * @path /users/{userId}/umbrellaActivity/{activityId}
-       */
-      match /umbrellaActivity/{activityId} {
-        allow read, write: if isOwner(userId);
       }
     }
     
     /**
      * @description Allows any authenticated user to read weather data.
      * @path /weather/{document=**}
-     * @allow (get) Any authenticated user can read weather documents.
-     * @deny (write) No user can write to the weather collection.
      */
     match /weather/{document=**} {
       allow read: if request.auth != null;
@@ -166,3 +82,5 @@ service cloud.firestore {
     }
   }
 }
+
+    
