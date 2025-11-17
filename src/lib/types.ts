@@ -30,6 +30,12 @@ export interface WeatherData {
   condition?: WeatherCondition;
   weathercode?: number;
   forecast_daily_raw?: string;
+  current?: {
+    temperature: number;
+    windspeed: number;
+    condition: WeatherCondition;
+    weathercode: number;
+  };
 }
 
 export interface NotificationLog {

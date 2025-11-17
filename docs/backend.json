@@ -278,7 +278,16 @@
         "windspeed": { "type": "number" },
         "condition": { "type": "string" },
         "weathercode": { "type": "number" },
-        "forecast_daily_raw": { "type": "string" }
+        "forecast_daily_raw": { "type": "string" },
+        "current": {
+          "type": "object",
+          "properties": {
+            "temperature": { "type": "number" },
+            "windspeed": { "type": "number" },
+            "condition": { "type": "string" },
+            "weathercode": { "type": "number" }
+          }
+        }
       }
     }
   },
