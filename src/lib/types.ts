@@ -25,13 +25,11 @@ export interface WeatherData {
   location_str: string;
   timestamp_ms: number;
   time_str?: string;
-  current?: {
-    temperature: number;
-    windspeed: number;
-    condition: WeatherCondition;
-    weathercode: number;
-  };
-  forecast_daily_raw?: string; // Changed from forecast
+  temperature: number;
+  windspeed: number;
+  condition?: WeatherCondition;
+  weathercode?: number;
+  forecast_daily_raw?: string;
 }
 
 export interface NotificationLog {

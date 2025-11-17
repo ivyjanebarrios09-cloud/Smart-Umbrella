@@ -19,9 +19,9 @@ import {
   Thermometer,
   Wind,
 } from 'lucide-react';
-import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { collection, limit, query } from 'firebase/firestore';
-import { WeatherCondition, Device, DailyForecast } from '@/lib/types';
+import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import { WeatherData, WeatherCondition, DailyForecast } from '@/lib/types';
 import Link from 'next/link';
 
 const weatherConditions: Record<
@@ -56,27 +56,21 @@ const getDayOfWeek = (dateString: string) => {
 };
 
 export function DashboardClient() {
-  const { user } = useUser();
   const firestore = useFirestore();
 
-  const devicesQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return query(
-      collection(firestore, `users/${user.uid}/devices`),
-      limit(1)
-    );
-  }, [firestore, user]);
+  const weatherDocRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, 'weather/current');
+  }, [firestore]);
 
-  const { data: devices, isLoading: areDevicesLoading } =
-    useCollection<Device>(devicesQuery);
-    
-  const device = devices?.[0];
+  const { data: latestWeather, isLoading: isWeatherLoading } =
+    useDoc<WeatherData>(weatherDocRef);
 
   const forecastArray: DailyForecast[] | null = useMemo(() => {
-    if (!device?.currentWeather?.forecast_daily_raw) return null;
+    if (!latestWeather?.forecast_daily_raw) return null;
 
     try {
-      const forecastData = JSON.parse(device.currentWeather.forecast_daily_raw);
+      const forecastData = JSON.parse(latestWeather.forecast_daily_raw);
       
       if (
         !forecastData.time ||
@@ -98,23 +92,20 @@ export function DashboardClient() {
       console.error("Failed to parse forecast JSON:", error);
       return null;
     }
-  }, [device]);
+  }, [latestWeather]);
 
-  const currentTemperature = device?.currentWeather?.temperature;
-  const currentWindspeed = device?.currentWeather?.windspeed;
-  const currentConditionName = device?.currentWeather?.condition ?? 'Cloudy';
+
+  const currentTemperature = latestWeather?.temperature;
+  const currentWindspeed = latestWeather?.windspeed;
+  const currentConditionName = latestWeather?.condition ?? 'Cloudy';
   const displayCondition = weatherConditions[currentConditionName];
-  const location = device?.currentWeather?.location_str;
-  const time = device?.currentWeather?.updatedAt?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || 'N/A';
-
 
   const mapSrc = useMemo(() => {
-    if (device?.currentWeather?.latitude && device?.currentWeather?.longitude) {
-      return `https://maps.google.com/maps?q=${device.currentWeather.latitude},${device.currentWeather.longitude}&hl=es;z=14&output=embed`;
+    if (latestWeather?.latitude && latestWeather?.longitude) {
+      return `https://maps.google.com/maps?q=${latestWeather.latitude},${latestWeather.longitude}&hl=es;z=14&output=embed`;
     }
     return '';
-  }, [device]);
-
+  }, [latestWeather]);
 
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -126,13 +117,13 @@ export function DashboardClient() {
             <span>Temperature</span>
           </CardTitle>
           <CardDescription>
-            {areDevicesLoading
+            {isWeatherLoading
               ? 'Loading location...'
-              : location || 'Unknown Location'}
+              : latestWeather?.location_str || 'Unknown Location'}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {areDevicesLoading ? (
+          {isWeatherLoading ? (
             <div className="flex items-center justify-center h-24 text-muted-foreground">
               <p>Loading...</p>
             </div>
@@ -143,12 +134,12 @@ export function DashboardClient() {
               </div>
               <div className="flex items-center gap-2 text-muted-foreground">
                 {displayCondition?.icon}
-                <span>{displayCondition?.name} at {time}</span>
+                <span>{displayCondition?.name}</span>
               </div>
             </div>
           ) : (
             <div className="flex items-center justify-center h-24 text-muted-foreground">
-              <p>No weather data available for this device.</p>
+              <p>No weather data available.</p>
             </div>
           )}
         </CardContent>
@@ -164,7 +155,7 @@ export function DashboardClient() {
           <CardDescription>Current wind speed</CardDescription>
         </CardHeader>
         <CardContent>
-          {areDevicesLoading ? (
+          {isWeatherLoading ? (
             <div className="flex items-center justify-center h-24 text-muted-foreground">
               <p>Loading...</p>
             </div>
@@ -193,7 +184,7 @@ export function DashboardClient() {
           <CardDescription>GPS coordinates of the device</CardDescription>
         </CardHeader>
         <CardContent>
-          {areDevicesLoading ? (
+          {isWeatherLoading ? (
             <div className="flex items-center justify-center h-48 text-muted-foreground">
               <p>Loading map...</p>
             </div>
@@ -225,7 +216,7 @@ export function DashboardClient() {
           <CardDescription>Upcoming weather at a glance</CardDescription>
         </CardHeader>
         <CardContent>
-          {areDevicesLoading ? (
+          {isWeatherLoading ? (
             <div className="flex items-center justify-center h-48 text-muted-foreground">
               <p>Loading forecast...</p>
             </div>
@@ -283,5 +274,3 @@ export function DashboardClient() {
     </div>
   );
 }
-
-    
