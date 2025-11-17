@@ -18,7 +18,10 @@ const alertSchema = z.object({
 // Initialize Firebase Admin SDK if not already initialized
 if (!admin.apps.length) {
   try {
-    admin.initializeApp();
+    // Use application default credentials for initialization
+    admin.initializeApp({
+      credential: admin.credential.applicationDefault(),
+    });
   } catch (error) {
     console.error('Firebase admin initialization error', error);
   }
@@ -78,6 +81,14 @@ export async function POST(request: Request) {
     );
   } catch (error: any) {
     console.error('Error creating notification log:', error);
+    // Return a more generic error to the client for security
+    if (error.code === 'permission-denied') {
+        return NextResponse.json(
+            { error: 'Forbidden' },
+            { status: 403 }
+        );
+    }
+    
     return NextResponse.json(
       { error: 'Failed to create notification log', details: error.message },
       { status: 500 }
