@@ -4,7 +4,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
-import { ArrowLeft, Laptop, Moon, Sun, KeyRound, CloudSync } from "lucide-react";
+import { ArrowLeft, Laptop, Moon, Sun, KeyRound, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
+import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import type { Device, WeatherData } from '@/lib/types';
 import { Input } from "@/components/ui/input";
@@ -224,7 +224,7 @@ export default function SettingsPage() {
                     <p className="text-sm text-muted-foreground">Manually save the latest weather data to your account.</p>
                   </div>
                   <Button onClick={handleSyncWeather} disabled={isSyncing}>
-                    <CloudSync className="mr-2 h-4 w-4" />
+                    <RefreshCw className="mr-2 h-4 w-4" />
                     {isSyncing ? "Syncing..." : "Sync Now"}
                   </Button>
                 </div>
