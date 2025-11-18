@@ -32,12 +32,14 @@ export default function AlertPage() {
     try {
       if (!user) throw new Error("Not signed in");
       if (!selectedDevice) throw new Error("Please select a device.");
+      
+      const idToken = await user.getIdToken();
 
-      const response = await fetch("/api/alert", {
+      const response = await fetch("/api/trigger-alert", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: user.uid,
+          idToken: idToken,
           deviceId: selectedDevice,
           message: "Left-behind alert triggered from app!",
           type: "left_behind",
