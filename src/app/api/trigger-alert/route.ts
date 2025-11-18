@@ -51,6 +51,27 @@ export async function POST(request: NextRequest) {
       timestamp: Timestamp.now(),
     });
 
+    // 3. Send alert to the ESP32 backend service
+    // IMPORTANT: Replace 'http://localhost:3000/umbrella-alert' with your actual backend URL
+    const backendUrl = process.env.UMBRELLA_BACKEND_URL || 'http://localhost:3000/umbrella-alert';
+    
+    try {
+      await fetch(backendUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: uid,
+          umbrellaId: deviceId,
+          message: 'Device triggered from web app',
+          type: 'ring',
+        }),
+      });
+    } catch (fetchError) {
+        // Log the error but don't fail the entire request, 
+        // as the alert is already saved in Firestore.
+        console.error('Failed to send alert to ESP32 backend:', fetchError);
+    }
+
 
     return NextResponse.json({ success: true, alertId: alertRef.id }, { status: 200 });
 
