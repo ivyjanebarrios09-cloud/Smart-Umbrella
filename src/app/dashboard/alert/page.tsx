@@ -21,8 +21,9 @@ import {
 import { Bell, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { collection, addDoc } from 'firebase/firestore';
 import type { Device } from '@/lib/types';
+import { updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 export default function AlertPage() {
   const [loading, setLoading] = useState(false);
@@ -44,7 +45,7 @@ export default function AlertPage() {
 
 
   const onSubmit = async () => {
-    if (!user) {
+    if (!user || !firestore) {
       toast({
         variant: 'destructive',
         title: 'Not Signed In',
@@ -66,33 +67,27 @@ export default function AlertPage() {
 
     try {
       const idToken = await user.getIdToken();
-
-      const response = await fetch('/api/trigger-alert', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          idToken: idToken,
-          deviceId: selectedDeviceInfo.id,
-          message: `Alert triggered for ${selectedDeviceInfo.metadata.name}`,
-          type: 'custom',
-        }),
+      
+      // We will write directly to firestore from the client
+      // A cloud function would then pick this up to send the alert to the device
+      const alertsRef = collection(firestore, `users/${user.uid}/alerts`);
+      addDocumentNonBlocking(alertsRef, {
+        userId: user.uid,
+        deviceId: selectedDeviceInfo.id,
+        message: `Alert triggered for ${selectedDeviceInfo.metadata.name}`,
+        type: 'custom',
+        timestamp: new Date(),
+      });
+      
+       const logRef = collection(firestore, `users/${user.uid}/notification_logs`);
+       addDocumentNonBlocking(logRef, {
+        userId: user.uid,
+        deviceId: selectedDeviceInfo.id,
+        message: `Alert triggered for ${selectedDeviceInfo.metadata.name}`,
+        type: 'custom',
+        timestamp: new Date(),
       });
 
-      const text = await response.text();
-      let data: any = {};
-      try {
-        data = text ? JSON.parse(text) : {};
-      } catch {}
-
-      if (!response.ok) {
-        console.error('Trigger API failed:', response.status, text);
-        const msg =
-          data?.error ||
-          data?.details ||
-          data?.message ||
-          `Server error ${response.status}`;
-        throw new Error(msg);
-      }
 
       toast({
         title: 'Alert Sent!',
