@@ -1,46 +1,63 @@
-// src/app/dashboard/alert/page.tsx
-"use client";
 
-import { useState } from "react";
-import { toast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Bell, ArrowLeft } from "lucide-react";
-import Link from "next/link";
+'use client';
 
-// Your custom Firebase hooks (keep these if you're using them)
-// If you don't have them yet, we'll fall back to auth.currentUser below
-import { useUser } from "@/firebase";
-import { auth } from "@/lib/firebase";
+import { useState, useMemo } from 'react';
+import { toast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Bell, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
+import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
+import type { Device } from '@/lib/types';
 
 export default function AlertPage() {
   const [loading, setLoading] = useState(false);
-  const [selectedDevice, setSelectedDevice] = useState<string>("");
+  const [selectedDevice, setSelectedDevice] = useState<string>('');
 
-  // Try to use your custom hook first, fall back to Firebase Auth
-  const customUser = useUser();
-  const user = customUser?.user ?? auth.currentUser;
+  const { user } = useUser();
+  const firestore = useFirestore();
 
-  // For now: we only have one umbrella → we don't actually use selectedDevice
-  // But we keep the UI nice and future-proof
-  const hasDevice = true; // Change later when you list real devices
+  const devicesRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return collection(firestore, `users/${user.uid}/devices`);
+  }, [firestore, user]);
+
+  const { data: devices } = useCollection<Device>(devicesRef);
+
+  const selectedDeviceInfo = useMemo(() => {
+    return devices?.find((d) => d.id === selectedDevice);
+  }, [devices, selectedDevice]);
+
 
   const onSubmit = async () => {
     if (!user) {
       toast({
-        variant: "destructive",
-        title: "Not Signed In",
-        description: "Please log in to send an alert.",
+        variant: 'destructive',
+        title: 'Not Signed In',
+        description: 'Please log in to send an alert.',
       });
       return;
     }
 
-    if (!selectedDevice && hasDevice) {
+    if (!selectedDeviceInfo) {
       toast({
-        variant: "destructive",
-        title: "No Device Selected",
-        description: "Please select your umbrella first.",
+        variant: 'destructive',
+        title: 'No Device Selected',
+        description: 'Please select your umbrella first.',
       });
       return;
     }
@@ -50,10 +67,15 @@ export default function AlertPage() {
     try {
       const idToken = await user.getIdToken();
 
-      const response = await fetch("/api/trigger-alert", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken }),
+      const response = await fetch('/api/trigger-alert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          idToken: idToken,
+          deviceId: selectedDeviceInfo.id,
+          message: `Alert triggered for ${selectedDeviceInfo.metadata.name}`,
+          type: 'custom',
+        }),
       });
 
       const text = await response.text();
@@ -63,7 +85,7 @@ export default function AlertPage() {
       } catch {}
 
       if (!response.ok) {
-        console.error("Trigger API failed:", response.status, text);
+        console.error('Trigger API failed:', response.status, text);
         const msg =
           data?.error ||
           data?.details ||
@@ -73,15 +95,15 @@ export default function AlertPage() {
       }
 
       toast({
-        title: "Alert Sent!",
-        description: "Your umbrella is buzzing and flashing right now!",
+        title: 'Alert Sent!',
+        description: 'Your umbrella should be buzzing and flashing right now!',
       });
     } catch (err: any) {
-      console.error("Failed to trigger alert:", err);
+      console.error('Failed to trigger alert:', err);
       toast({
-        variant: "destructive",
-        title: "Failed",
-        description: err.message || "Could not reach your umbrella.",
+        variant: 'destructive',
+        title: 'Failed',
+        description: err.message || 'Could not reach your umbrella.',
       });
     } finally {
       setLoading(false);
@@ -111,30 +133,35 @@ export default function AlertPage() {
           </CardHeader>
 
           <CardContent className="space-y-6">
-            {/* Fake device selector — looks pro, ready for future */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Select Device</label>
               <Select value={selectedDevice} onValueChange={setSelectedDevice}>
                 <SelectTrigger>
-                  <SelectValue placeholder="My Smart Umbrella" />
+                  <SelectValue placeholder="Select a device..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="umbrella-001">My Smart Umbrella</SelectItem>
+                  {devices && devices.length > 0 ? (
+                    devices.map((device) => (
+                      <SelectItem key={device.id} value={device.id}>
+                        {device.metadata.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="no-devices" disabled>
+                      No devices registered
+                    </SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
 
             <Button
               onClick={onSubmit}
-              disabled={loading || !user}
+              disabled={loading || !user || !selectedDevice}
               size="lg"
               className="w-full text-lg font-semibold"
             >
-              {loading ? (
-                <>Sending Alert...</>
-              ) : (
-                <>Ring My Umbrella Now!</>
-              )}
+              {loading ? <>Sending Alert...</> : <>Ring My Umbrella Now!</>}
             </Button>
 
             <p className="text-center text-xs text-muted-foreground">
