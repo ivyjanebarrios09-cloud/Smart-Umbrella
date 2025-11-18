@@ -62,6 +62,17 @@ export default function DeviceAlertPage() {
   async function onSubmit(data: AlertFormValues) {
     if (!user) return;
 
+    const selectedDevice = devices?.find(d => d.metadata.deviceId === data.deviceId);
+
+    if (!selectedDevice) {
+      toast({
+        variant: 'destructive',
+        title: 'Device not found',
+        description: 'The selected device could not be found.',
+      });
+      return;
+    }
+
     try {
       const response = await fetch('/api/alert', {
         method: 'POST',
@@ -71,7 +82,7 @@ export default function DeviceAlertPage() {
         body: JSON.stringify({
           userId: user.uid,
           deviceId: data.deviceId,
-          message: 'I think I left my device behind!',
+          message: `I think I left my ${selectedDevice.metadata.name} behind!`,
           type: 'left_behind',
         }),
       });
@@ -142,8 +153,8 @@ export default function DeviceAlertPage() {
                         <SelectContent>
                           {devices && devices.length > 0 ? (
                             devices.map((device) => (
-                              <SelectItem key={device.id} value={device.id}>
-                                {device.name}
+                              <SelectItem key={device.id} value={device.metadata.deviceId}>
+                                {device.metadata.name}
                               </SelectItem>
                             ))
                           ) : (
