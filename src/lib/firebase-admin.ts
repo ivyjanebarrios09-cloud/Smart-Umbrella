@@ -1,3 +1,4 @@
+
 // src/lib/firebase-admin.ts
 import admin from 'firebase-admin';
 
@@ -13,10 +14,10 @@ if (!admin.apps.length) {
     // to initialize with a service account key file.
     // However, for App Hosting, argument-less initializeApp is correct.
     console.error('Firebase admin initialization error', error);
-    // Avoid initializing with potentially missing env vars which causes build failures.
-    // The error "Request had invalid authentication credentials" at runtime is better than a build failure.
   }
 }
 
-export const db = admin.firestore();
-export const auth = admin.auth();
+const db = admin.firestore();
+const auth = admin.auth();
+
+export { db, auth };
