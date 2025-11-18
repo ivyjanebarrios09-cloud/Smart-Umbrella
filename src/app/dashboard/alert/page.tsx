@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -18,15 +17,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Bell, ArrowLeft } from 'lucide-react';
+import { Bell, ArrowLeft, Lightbulb, Volume2 } from 'lucide-react';
 import Link from 'next/link';
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import {
+  useUser,
+  useFirestore,
+  useCollection,
+  useMemoFirebase,
+  updateDocumentNonBlocking,
+} from '@/firebase';
+import { collection, doc, serverTimestamp } from 'firebase/firestore';
 import type { Device } from '@/lib/types';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 
 export default function AlertPage() {
   const [loading, setLoading] = useState(false);
-  const [selectedDevice, setSelectedDevice] = useState<string>('');
+  const [selectedDevice, setSelectedDevice] = useState<string>('esp32-1'); // Default to esp32-1
+  const [ledState, setLedState] = useState(true);
+  const [buzzerState, setBuzzerState] = useState(false);
 
   const { user } = useUser();
   const firestore = useFirestore();
@@ -38,26 +47,21 @@ export default function AlertPage() {
 
   const { data: devices } = useCollection<Device>(devicesRef);
 
-  const selectedDeviceInfo = useMemo(() => {
-    return devices?.find((d) => d.id === selectedDevice);
-  }, [devices, selectedDevice]);
-
-
   const onSubmit = async () => {
     if (!user || !firestore) {
       toast({
         variant: 'destructive',
         title: 'Not Signed In',
-        description: 'Please log in to send an alert.',
+        description: 'Please log in to update device state.',
       });
       return;
     }
 
-    if (!selectedDeviceInfo) {
+    if (!selectedDevice) {
       toast({
         variant: 'destructive',
         title: 'No Device Selected',
-        description: 'Please select your umbrella first.',
+        description: 'Please select a device first.',
       });
       return;
     }
@@ -65,33 +69,24 @@ export default function AlertPage() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/trigger-alert', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          deviceId: selectedDeviceInfo.metadata.deviceId,
-          message: `Alert triggered for ${selectedDeviceInfo.metadata.name}`,
-          type: 'custom',
-        }),
+      const deviceStateRef = doc(firestore, 'devices', selectedDevice);
+      updateDocumentNonBlocking(deviceStateRef, {
+        led: ledState,
+        buzzer: buzzerState,
+        updated: serverTimestamp(),
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.details || 'Failed to trigger alert.');
-      }
       
       toast({
-        title: 'Alert Sent!',
-        description: 'Your umbrella should be buzzing and flashing right now!',
+        title: 'Device State Updated!',
+        description: `Updated ${selectedDevice} with new state.`,
       });
+
     } catch (err: any) {
-      console.error('Failed to trigger alert:', err);
+      console.error('Failed to update device state:', err);
       toast({
         variant: 'destructive',
-        title: 'Failed',
-        description: err.message || 'Could not reach your umbrella.',
+        title: 'Update Failed',
+        description: err.message || 'Could not update device state.',
       });
     } finally {
       setLoading(false);
@@ -114,9 +109,9 @@ export default function AlertPage() {
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
               <Bell className="h-10 w-10 text-primary" />
             </div>
-            <CardTitle className="text-2xl">Ring Your Umbrella</CardTitle>
+            <CardTitle className="text-2xl">Device Control</CardTitle>
             <CardDescription>
-              Trigger the buzzer + LED on your smart umbrella instantly
+              Manage the state of your device components.
             </CardDescription>
           </CardHeader>
 
@@ -128,6 +123,7 @@ export default function AlertPage() {
                   <SelectValue placeholder="Select a device..." />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="esp32-1">esp32-1</SelectItem>
                   {devices && devices.length > 0 ? (
                     devices.map((device) => (
                       <SelectItem key={device.id} value={device.id}>
@@ -136,12 +132,30 @@ export default function AlertPage() {
                     ))
                   ) : (
                     <SelectItem value="no-devices" disabled>
-                      No devices registered
+                      No other devices registered
                     </SelectItem>
                   )}
                 </SelectContent>
               </Select>
             </div>
+            
+            <div className="space-y-4">
+               <div className="flex items-center justify-between rounded-lg border p-4">
+                <Label htmlFor="led-switch" className="flex items-center gap-2 font-medium">
+                  <Lightbulb className="h-5 w-5" />
+                  LED
+                </Label>
+                <Switch id="led-switch" checked={ledState} onCheckedChange={setLedState} />
+              </div>
+               <div className="flex items-center justify-between rounded-lg border p-4">
+                <Label htmlFor="buzzer-switch" className="flex items-center gap-2 font-medium">
+                  <Volume2 className="h-5 w-5" />
+                  Buzzer
+                </Label>
+                <Switch id="buzzer-switch" checked={buzzerState} onCheckedChange={setBuzzerState} />
+              </div>
+            </div>
+
 
             <Button
               onClick={onSubmit}
@@ -149,11 +163,11 @@ export default function AlertPage() {
               size="lg"
               className="w-full text-lg font-semibold"
             >
-              {loading ? <>Sending Alert...</> : <>Ring My Umbrella Now!</>}
+              {loading ? <>Updating State...</> : <>Update Device State</>}
             </Button>
 
             <p className="text-center text-xs text-muted-foreground">
-              Your umbrella will buzz and flash for 5 seconds when triggered.
+              Changes will be sent to your device in real-time.
             </p>
           </CardContent>
         </Card>

@@ -1,6 +1,28 @@
 
 {
   "entities": {
+    "DeviceState": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "DeviceState",
+      "type": "object",
+      "description": "Represents the real-time state of a hardware device's components.",
+      "properties": {
+        "led": {
+          "type": "boolean",
+          "description": "The current state of the LED (true for on, false for off)."
+        },
+        "buzzer": {
+          "type": "boolean",
+          "description": "The current state of the buzzer (true for on, false for off)."
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp of the last state update."
+        }
+      },
+      "required": ["led", "buzzer", "updated"]
+    },
     "User": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "User",
@@ -331,6 +353,22 @@
   },
   "firestore": {
     "structure": [
+      {
+        "path": "/devices/{deviceId}",
+        "definition": {
+          "entityName": "DeviceState",
+          "schema": {
+            "$ref": "#/backend/entities/DeviceState"
+          },
+          "description": "Top-level collection to store the real-time state of hardware devices.",
+          "params": [
+            {
+              "name": "deviceId",
+              "description": "The unique identifier for the hardware device (e.g., 'esp32-1')."
+            }
+          ]
+        }
+      },
       {
         "path": "/users/{userId}",
         "definition": {
