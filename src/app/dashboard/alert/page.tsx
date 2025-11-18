@@ -21,9 +21,8 @@ import {
 import { Bell, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection } from 'firebase/firestore';
 import type { Device } from '@/lib/types';
-import { updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 export default function AlertPage() {
   const [loading, setLoading] = useState(false);
@@ -68,27 +67,24 @@ export default function AlertPage() {
     try {
       const idToken = await user.getIdToken();
       
-      // We will write directly to firestore from the client
-      // A cloud function would then pick this up to send the alert to the device
-      const alertsRef = collection(firestore, `users/${user.uid}/alerts`);
-      addDocumentNonBlocking(alertsRef, {
-        userId: user.uid,
-        deviceId: selectedDeviceInfo.id,
-        message: `Alert triggered for ${selectedDeviceInfo.metadata.name}`,
-        type: 'custom',
-        timestamp: new Date(),
+      const response = await fetch('/api/trigger-alert', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          idToken: idToken,
+          deviceId: selectedDeviceInfo.id,
+          message: `Alert triggered for ${selectedDeviceInfo.metadata.name}`,
+          type: 'custom',
+        }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.details || 'Failed to trigger alert.');
+      }
       
-       const logRef = collection(firestore, `users/${user.uid}/notification_logs`);
-       addDocumentNonBlocking(logRef, {
-        userId: user.uid,
-        deviceId: selectedDeviceInfo.id,
-        message: `Alert triggered for ${selectedDeviceInfo.metadata.name}`,
-        type: 'custom',
-        timestamp: new Date(),
-      });
-
-
       toast({
         title: 'Alert Sent!',
         description: 'Your umbrella should be buzzing and flashing right now!',
