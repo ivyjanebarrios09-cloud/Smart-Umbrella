@@ -19,11 +19,10 @@ import {
   Thermometer,
   Wind,
 } from 'lucide-react';
-import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, limit } from 'firebase/firestore';
+import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
 import { WeatherData, WeatherCondition, DailyForecast } from '@/lib/types';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
 
 const weatherConditions: Record<
   WeatherCondition,
@@ -58,21 +57,14 @@ const getDayOfWeek = (dateString: string) => {
 
 export function DashboardClient() {
   const firestore = useFirestore();
-  const { user } = useUser();
 
-  const weatherQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return query(
-      collection(firestore, `users/${user.uid}/weather`),
-      orderBy('updatedAt', 'desc'),
-      limit(1)
-    );
-  }, [firestore, user]);
+  const weatherDocRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, 'weather/current');
+  }, [firestore]);
 
-  const { data: weatherData, isLoading: isWeatherLoading } =
-    useCollection<WeatherData>(weatherQuery);
-    
-  const latestWeather = useMemo(() => (weatherData && weatherData.length > 0 ? weatherData[0] : null), [weatherData]);
+  const { data: latestWeather, isLoading: isWeatherLoading } =
+    useDoc<WeatherData>(weatherDocRef);
 
   const forecastArray: DailyForecast[] | null = useMemo(() => {
     if (!latestWeather?.forecast_daily_raw) return null;

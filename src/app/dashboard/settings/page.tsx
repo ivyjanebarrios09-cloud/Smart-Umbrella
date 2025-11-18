@@ -5,7 +5,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
-import { ArrowLeft, Laptop, Moon, Sun, KeyRound, RefreshCw } from "lucide-react";
+import { ArrowLeft, Laptop, Moon, Sun, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -63,8 +63,6 @@ export default function SettingsPage() {
 
   const { data: devices, isLoading: areDevicesLoading } = useCollection<Device>(devicesRef);
   
-  const [isSyncing, setIsSyncing] = useState(false);
-
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast({ title: "Copied to clipboard!" });
@@ -99,49 +97,6 @@ export default function SettingsPage() {
     });
     form.reset();
   }
-  
-  const handleSyncWeather = async () => {
-    if (!user) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'You must be logged in to sync weather.',
-      });
-      return;
-    }
-    
-    setIsSyncing(true);
-
-    try {
-      const response = await fetch('/api/user-weather', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId: user.uid }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.details || 'Failed to sync weather data.');
-      }
-      
-      toast({
-        title: 'Weather Synced!',
-        description: 'The latest weather data has been saved to your profile.',
-      });
-
-    } catch (error: any) {
-      console.error('Error syncing weather data:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Sync Failed',
-        description: error.message || 'Could not sync weather data.',
-      });
-    } finally {
-      setIsSyncing(false);
-    }
-  };
 
 
   return (
@@ -205,23 +160,6 @@ export default function SettingsPage() {
                     checked={leftBehindAlert}
                     onCheckedChange={setLeftBehindAlert}
                   />
-                </div>
-              </div>
-              
-              <Separator />
-              
-              {/* Data Sync */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Data Management</h3>
-                 <div className="flex items-center justify-between p-4 rounded-lg border">
-                  <div>
-                    <Label className="font-medium">Sync Weather Data</Label>
-                    <p className="text-sm text-muted-foreground">Manually save the latest weather data to your account.</p>
-                  </div>
-                  <Button onClick={handleSyncWeather} disabled={isSyncing}>
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    {isSyncing ? "Syncing..." : "Sync Now"}
-                  </Button>
                 </div>
               </div>
             </CardContent>
