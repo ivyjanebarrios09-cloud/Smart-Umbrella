@@ -19,7 +19,7 @@ import {
   Thermometer,
   Wind,
 } from 'lucide-react';
-import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { WeatherData, WeatherCondition, DailyForecast } from '@/lib/types';
 import Link from 'next/link';
@@ -57,11 +57,13 @@ const getDayOfWeek = (dateString: string) => {
 
 export function DashboardClient() {
   const firestore = useFirestore();
+  const { user } = useUser();
 
   const weatherDocRef = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return doc(firestore, 'weather/current');
-  }, [firestore]);
+    if (!firestore || !user) return null;
+    // Using the specific path provided by the user
+    return doc(firestore, `users/${user.uid}/weather/6TV33oSJCFPqPNp6wPSS`);
+  }, [firestore, user]);
 
   const { data: latestWeather, isLoading: isWeatherLoading } =
     useDoc<WeatherData>(weatherDocRef);

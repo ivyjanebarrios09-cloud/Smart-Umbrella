@@ -24,14 +24,12 @@ export interface WeatherData {
   longitude: number;
   location_str: string;
   time: string;
-  updatedAt: number | Date | Timestamp;
+  updatedAt: number | Timestamp;
   temperature: number;
   windspeed: number;
   condition: WeatherCondition;
-  weathercode: number;
+  weathercode?: number;
   forecast_daily_raw: string;
-  // The 'current' object is for the source public /weather/current doc,
-  // but user-specific weather data is flattened.
   current?: {
     temperature: number;
     windspeed: number;
