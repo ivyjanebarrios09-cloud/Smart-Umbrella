@@ -164,6 +164,37 @@
         "timestamp"
       ]
     },
+    "Alert": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Alert",
+      "type": "object",
+      "description": "Represents an alert for a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the alert."
+        },
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user this alert belongs to."
+        },
+        "message": {
+          "type": "string",
+          "description": "The content of the alert message."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "The date and time the alert was created.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "message",
+        "timestamp"
+      ]
+    },
     "WeatherAlertPreference": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "WeatherAlertPreference",
@@ -380,6 +411,26 @@
             {
               "name": "notificationLogId",
               "description": "The unique identifier of the notification log entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/alerts/{alertId}",
+        "definition": {
+          "entityName": "Alert",
+          "schema": {
+            "$ref": "#/backend/entities/Alert"
+          },
+          "description": "Collection to store alerts for a user.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "alertId",
+              "description": "The unique identifier of the alert entry."
             }
           ]
         }

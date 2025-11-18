@@ -12,6 +12,7 @@
  * - `/users/{userId}/devices/{deviceId}`: Stores devices owned by a user.
  * - `/users/{userId}/devices/{deviceId}/umbrellaActivity/{activityId}`: Activity log for a specific device.
  * - `/users/{userId}/notification_logs/{notificationLogId}`: Stores notification logs for a user.
+ * - `/users/{userId}/alerts/{alertId}`: Stores alerts for a user.
  * - `/users/{userId}/weather_alert_preferences/{weatherAlertPreferenceId}`: Stores weather alert preferences for a user.
  * - `/users/{userId}/weather/{weatherDataId}`: Stores weather data logs for a user.
  * - `/weather/{doc}`: Stores public weather data. Readable by any authenticated user.
@@ -61,6 +62,14 @@ service cloud.firestore {
        * @path /users/{userId}/notification_logs/{notificationLogId}
        */
       match /notification_logs/{notificationLogId} {
+         allow read, write: if isOwner(userId);
+      }
+      
+      /**
+       * @description Enforces user-level access control for alerts.
+       * @path /users/{userId}/alerts/{alertId}
+       */
+      match /alerts/{alertId} {
          allow read, write: if isOwner(userId);
       }
 
