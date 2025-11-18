@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import {
@@ -33,7 +33,7 @@ import { Label } from '@/components/ui/label';
 
 export default function AlertPage() {
   const [loading, setLoading] = useState(false);
-  const [selectedDevice, setSelectedDevice] = useState<string>('esp32-1'); // Default to esp32-1
+  const [selectedDevice, setSelectedDevice] = useState<string>('');
 
   const { user } = useUser();
   const firestore = useFirestore();
@@ -43,7 +43,13 @@ export default function AlertPage() {
     return collection(firestore, `users/${user.uid}/devices`);
   }, [firestore, user]);
 
-  const { data: devices } = useCollection<Device>(devicesRef);
+  const { data: devices, isLoading: areDevicesLoading } = useCollection<Device>(devicesRef);
+
+  useEffect(() => {
+    if (devices && devices.length > 0 && !selectedDevice) {
+      setSelectedDevice(devices[0].metadata.deviceId);
+    }
+  }, [devices, selectedDevice]);
 
   const sendCommand = async (ledState: boolean, buzzerState: boolean) => {
     if (!user || !firestore) {
@@ -116,21 +122,22 @@ export default function AlertPage() {
           <CardContent className="space-y-6">
             <div className="space-y-2">
               <Label className="text-sm font-medium">Select Device</Label>
-              <Select value={selectedDevice} onValueChange={setSelectedDevice}>
+              <Select value={selectedDevice} onValueChange={setSelectedDevice} disabled={areDevicesLoading || !devices || devices.length === 0}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select a device..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="esp32-1">esp32-1</SelectItem>
-                  {devices && devices.length > 0 ? (
+                  {areDevicesLoading ? (
+                    <SelectItem value="loading" disabled>Loading devices...</SelectItem>
+                  ) : devices && devices.length > 0 ? (
                     devices.map((device) => (
-                      <SelectItem key={device.id} value={device.id}>
+                      <SelectItem key={device.id} value={device.metadata.deviceId}>
                         {device.metadata.name}
                       </SelectItem>
                     ))
                   ) : (
                     <SelectItem value="no-devices" disabled>
-                      No other devices registered
+                      No devices registered
                     </SelectItem>
                   )}
                 </SelectContent>
