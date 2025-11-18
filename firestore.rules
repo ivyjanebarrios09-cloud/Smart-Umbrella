@@ -3,14 +3,14 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // ──────────────────────────────────────────────────────────────
-    //  User Data Access
+    //  User-specific data
     // ──────────────────────────────────────────────────────────────
     match /users/{userId}/{document=**} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
     // ──────────────────────────────────────────────────────────────
-    //  Device State Control
+    //  Device State Control (Writable by any authenticated user)
     // ──────────────────────────────────────────────────────────────
     match /devices/{deviceId} {
       allow read, write: if request.auth != null;
@@ -18,10 +18,10 @@ service cloud.firestore {
 
     // ──────────────────────────────────────────────────────────────
     //  Public Weather Data
-    // ────────────────────────────────_   ─────────────────────────────
+    // ──────────────────────────────────────────────────────────────
     match /weather/{docId} {
       allow read: if request.auth != null;
-      // Only your admin account can write global weather
+      // Only an admin account can write global weather
       allow write: if request.auth != null && request.auth.uid == 'd2La4nKBSUQYTF5aokjYjo1x3NH3';
     }
   }
