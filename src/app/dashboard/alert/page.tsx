@@ -27,46 +27,47 @@ export default function AlertPage() {
 
   const { data: devices, isLoading: areDevicesLoading } = useCollection<Device>(devicesRef);
 
-  const onSubmit = async () => {
-    setLoading(true);
+  // In src/app/dashboard/alert/page.tsx → replace the whole try/catch with this:
+const onSubmit = async () => {
+  setLoading(true);
+  try {
+    const user = auth.currentUser;
+    if (!user) throw new Error("Not signed in");
+
+    const idToken = await user.getIdToken();
+
+    const response = await fetch("/api/trigger-alert", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ idToken }),
+    });
+
+    // ←←← THIS IS THE FIX ←←←
+    const text = await response.text();        // read as text first
+    let data;
     try {
-      if (!user) throw new Error("Not signed in");
-      if (!selectedDevice) throw new Error("Please select a device.");
-      
-      const idToken = await user.getIdToken();
-
-      const response = await fetch("/api/trigger-alert", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          idToken: idToken,
-          deviceId: selectedDevice,
-          message: "Left-behind alert triggered from app!",
-          type: "left_behind",
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.details || "Failed to send alert.");
-      }
-
-      toast({
-        title: "Alert Sent!",
-        description: "The alert has been logged and sent to your device.",
-      });
-
-    } catch (err: any) {
-      console.error(err);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: err.message || "Something went wrong",
-      });
-    } finally {
-      setLoading(false);
+      data = text ? JSON.parse(text) : {};
+    } catch {
+      data = {};
     }
-  };
+
+    if (!response.ok) {
+      console.error("API error:", response.status, text);
+      throw new Error(data.error || data.details || `Server error ${response.status}`);
+    }
+
+    toast({ title: "Alert Sent!", description: "Your umbrella is buzzing!" });
+  } catch (err: any) {
+    console.error("Send alert failed:", err);
+    toast({
+      variant: "destructive",
+      title: "Error",
+      description: err.message || "Something went wrong",
+    });
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
