@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -15,7 +15,6 @@ import {
   CloudRain,
   Cloudy,
   MapPin,
-  RefreshCw,
   Sun,
   Thermometer,
   Wind,
@@ -60,7 +59,6 @@ const getDayOfWeek = (dateString: string) => {
 export function DashboardClient() {
   const firestore = useFirestore();
   const { user } = useUser();
-  const [refreshKey, setRefreshKey] = useState(0);
 
   const weatherQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -69,15 +67,11 @@ export function DashboardClient() {
       orderBy('updatedAt', 'desc'),
       limit(1)
     );
-  }, [firestore, user, refreshKey]);
+  }, [firestore, user]);
 
   const { data: weatherData, isLoading: isWeatherLoading } =
     useCollection<WeatherData>(weatherQuery);
     
-  const handleRefresh = () => {
-    setRefreshKey(oldKey => oldKey + 1);
-  };
-
   const latestWeather = useMemo(() => (weatherData && weatherData.length > 0 ? weatherData[0] : null), [weatherData]);
 
   const forecastArray: DailyForecast[] | null = useMemo(() => {
@@ -123,12 +117,6 @@ export function DashboardClient() {
 
   return (
     <>
-      <div className="flex items-center justify-end mb-4">
-        <Button onClick={handleRefresh} variant="outline" size="sm">
-          <RefreshCw className={`h-4 w-4 mr-2 ${isWeatherLoading ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
-      </div>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {/* Temperature Card */}
         <Card>
