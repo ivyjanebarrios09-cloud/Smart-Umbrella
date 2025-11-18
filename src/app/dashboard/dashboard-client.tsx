@@ -62,7 +62,7 @@ export function DashboardClient() {
   const weatherDocRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     // Using the specific path provided by the user
-    return doc(firestore, `users/${user.uid}/weather/6TV33oSJCFPqPNp6wPSS`);
+    return doc(firestore, `users/${user.uid}/weather/I6yMBEdW55le8uIdOPVQ`);
   }, [firestore, user]);
 
   const { data: latestWeather, isLoading: isWeatherLoading } =
