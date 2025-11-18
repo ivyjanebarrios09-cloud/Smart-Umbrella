@@ -56,6 +56,7 @@ export interface Device {
   metadata: {
     name: string;
     deviceId: string;
+    ipAddress?: string; // Added IP address
     model?: string;
     createdAt?: Timestamp;
   };
@@ -81,7 +82,3 @@ export interface UmbrellaActivity {
   location?: string;
   time: string;
 }
-
-    
-
-    

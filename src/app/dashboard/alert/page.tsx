@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -32,6 +33,7 @@ import {
 import { toast } from '@/hooks/use-toast';
 import { collection } from 'firebase/firestore';
 import type { Device } from '@/lib/types';
+import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 const alertFormSchema = z.object({
   deviceId: z.string().min(1, 'Please select a device.'),
@@ -51,6 +53,11 @@ export default function DeviceAlertPage() {
   const { data: devices, isLoading: areDevicesLoading } =
     useCollection<Device>(devicesRef);
 
+  const notificationsRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return collection(firestore, `users/${user.uid}/notification_logs`);
+  }, [firestore, user]);
+
   const form = useForm<AlertFormValues>({
     resolver: zodResolver(alertFormSchema),
     defaultValues: {
@@ -60,9 +67,9 @@ export default function DeviceAlertPage() {
   });
 
   async function onSubmit(data: AlertFormValues) {
-    if (!user) return;
+    if (!user || !devices || !notificationsRef) return;
 
-    const selectedDevice = devices?.find(d => d.metadata.deviceId === data.deviceId);
+    const selectedDevice = devices?.find(d => d.id === data.deviceId);
 
     if (!selectedDevice) {
       toast({
@@ -73,36 +80,48 @@ export default function DeviceAlertPage() {
       return;
     }
 
+    const { ipAddress, name } = selectedDevice.metadata;
+
+    if (!ipAddress) {
+      toast({
+        variant: 'destructive',
+        title: 'IP Address Missing',
+        description: `No IP address is configured for "${name}". Please add it in settings.`,
+      });
+      return;
+    }
+
+    const esp32Endpoint = `http://${ipAddress}/trigger-alert`;
+
     try {
-      const response = await fetch('/api/alert', {
+      const response = await fetch(esp32Endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: user.uid,
-          deviceId: data.deviceId,
-          message: `I think I left my ${selectedDevice.metadata.name} behind!`,
-          type: 'left_behind',
-        }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.details || 'Failed to send alert.');
+        throw new Error(`ESP32 device responded with status: ${response.status}`);
       }
+
+      // Also log this event to Firestore for history
+      addDocumentNonBlocking(notificationsRef, {
+        userId: user.uid,
+        deviceId: selectedDevice.id,
+        message: `Triggered alert on "${name}" via local network.`,
+        type: 'custom',
+        timestamp: new Date(),
+      });
 
       toast({
         title: 'Alert Sent!',
-        description: 'Your "left-behind" notification has been logged.',
+        description: `Successfully sent an alert to "${name}" at ${ipAddress}.`,
       });
       form.reset();
     } catch (error: any) {
-      console.error('Error sending alert:', error);
+      console.error('Error sending alert to ESP32:', error);
       toast({
         variant: 'destructive',
         title: 'Uh oh! Something went wrong.',
-        description: error.message || 'There was a problem sending your alert.',
+        description: error.message || `Could not connect to the device at ${ipAddress}.`,
       });
     }
   }
@@ -129,7 +148,7 @@ export default function DeviceAlertPage() {
           <CardHeader>
             <CardTitle>Device Alert</CardTitle>
             <CardDescription>
-              Select a device to report it as missing. This will log a "left-behind" alert in your notification history.
+              Select a device to trigger its local alert system directly.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -147,13 +166,13 @@ export default function DeviceAlertPage() {
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select the missing device" />
+                            <SelectValue placeholder="Select the target device" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           {devices && devices.length > 0 ? (
                             devices.map((device) => (
-                              <SelectItem key={device.id} value={device.metadata.deviceId}>
+                              <SelectItem key={device.id} value={device.id}>
                                 {device.metadata.name}
                               </SelectItem>
                             ))
@@ -170,7 +189,7 @@ export default function DeviceAlertPage() {
                 />
                 <Button type="submit" disabled={!devices || devices.length === 0}>
                   <Send className="mr-2 h-4 w-4" />
-                  Send Missing Alert
+                  Trigger Local Alert
                 </Button>
               </form>
             </Form>
