@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
 
     // 3. Send alert to the ESP32 backend service
     // IMPORTANT: Replace 'http://localhost:3000/umbrella-alert' with your actual backend URL
-    const backendUrl = process.env.UMBRELLA_BACKEND_URL || 'http://localhost:3000/umbrella-alert';
+    const backendUrl = process.env.UMBRELLA_BACKEND_URL || 'https://firestore.googleapis.com/v1/projects/studio-2370514225-ff786/databases/(default)/documents/users/d2La4nKBSUQYTF5aokjYjo1x3NH3/alert_requests/esp32_secret_x9k2m7p4q8z1w3v6t5y9r2n8c7f';
     
     try {
       await fetch(backendUrl, {
