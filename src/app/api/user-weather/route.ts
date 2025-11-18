@@ -2,21 +2,10 @@
 'use server';
 
 import { NextResponse } from 'next/server';
-import * as admin from 'firebase-admin';
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { db } from '@/lib/firebase-admin';
+import { FieldValue } from 'firebase-admin/firestore';
 import { z } from 'zod';
 import type { WeatherData } from '@/lib/types';
-
-// Initialize Firebase Admin SDK if not already initialized
-if (!admin.apps.length) {
-  try {
-    admin.initializeApp();
-  } catch (error) {
-    console.error('Firebase admin initialization error', error);
-  }
-}
-
-const db = getFirestore();
 
 const userWeatherSchema = z.object({
   userId: z.string().min(1, { message: 'User ID is required.' }),

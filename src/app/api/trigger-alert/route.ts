@@ -2,20 +2,9 @@
 'use server';
 
 import { NextResponse, type NextRequest } from 'next/server';
-import * as admin from 'firebase-admin';
-import { getFirestore, Timestamp } from 'firebase-admin/firestore';
+import { db, auth as adminAuth } from '@/lib/firebase-admin';
+import { Timestamp } from 'firebase-admin/firestore';
 import { z } from 'zod';
-
-// Initialize Firebase Admin SDK if not already initialized
-if (!admin.apps.length) {
-  try {
-    admin.initializeApp();
-  } catch (error) {
-    console.error('Firebase admin initialization error', error);
-  }
-}
-
-const db = getFirestore();
 
 const alertSchema = z.object({
   idToken: z.string(),
@@ -36,7 +25,7 @@ export async function POST(request: NextRequest) {
     const { idToken, deviceId, message, type } = parsedData.data;
 
     // 1. Verify the ID token using the Admin SDK
-    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    const decodedToken = await adminAuth.verifyIdToken(idToken);
     const uid = decodedToken.uid;
 
     // 2. Write to the user's `alerts` subcollection in Firestore
