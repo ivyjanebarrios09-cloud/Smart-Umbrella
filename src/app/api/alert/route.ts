@@ -18,7 +18,9 @@ const alertSchema = z.object({
 // Initialize Firebase Admin SDK if not already initialized
 if (!admin.apps.length) {
   try {
-    admin.initializeApp();
+    admin.initializeApp({
+      credential: admin.credential.applicationDefault(),
+    });
   } catch (error) {
     console.error('Firebase admin initialization error', error);
   }
