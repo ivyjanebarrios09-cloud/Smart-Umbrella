@@ -1,123 +1,70 @@
-'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
-import Link from 'next/link';
-import { ArrowLeft, Send } from 'lucide-react';
-import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { toast } from '@/hooks/use-toast';
-import { collection } from 'firebase/firestore';
-import type { Device } from '@/lib/types';
+"use client";
 
-const alertFormSchema = z.object({
-  deviceId: z.string().min(1, 'Please select a device.'),
-});
+import { useAuth, useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { useState } from "react";
+import { toast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { collection } from "firebase/firestore";
+import type { Device } from "@/lib/types";
+import { Bell } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
-type AlertFormValues = z.infer<typeof alertFormSchema>;
-
-export default function DeviceAlertPage() {
-  const { user, isUserLoading } = useUser();
+export default function AlertPage() {
+  const [loading, setLoading] = useState(false);
+  const [selectedDevice, setSelectedDevice] = useState<string>('');
+  const { user } = useUser();
   const firestore = useFirestore();
+  const auth = useAuth();
 
   const devicesRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return collection(firestore, `users/${user.uid}/devices`);
   }, [firestore, user]);
 
-  const { data: devices, isLoading: areDevicesLoading } =
-    useCollection<Device>(devicesRef);
+  const { data: devices, isLoading: areDevicesLoading } = useCollection<Device>(devicesRef);
 
-  const form = useForm<AlertFormValues>({
-    resolver: zodResolver(alertFormSchema),
-    defaultValues: {
-      deviceId: '',
-    },
-    mode: 'onChange',
-  });
-
-  async function onSubmit(data: AlertFormValues) {
-    if (!user || !devices) return;
-
-    const selectedDevice = devices?.find(d => d.id === data.deviceId);
-
-    if (!selectedDevice) {
-      toast({
-        variant: 'destructive',
-        title: 'Device not found',
-        description: 'The selected device could not be found.',
-      });
-      return;
-    }
-    
-    const { name } = selectedDevice.metadata;
-    const message = `Triggered alert on "${name}" via dashboard.`;
-
+  const onSubmit = async () => {
+    setLoading(true);
     try {
-      const response = await fetch('/api/alert', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      if (!user) throw new Error("Not signed in");
+      if (!selectedDevice) throw new Error("Please select a device.");
+
+      const response = await fetch("/api/alert", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: user.uid,
-          deviceId: selectedDevice.id,
-          message: message,
-          type: 'custom',
-          fcmToken: user.fcmToken,
+          deviceId: selectedDevice,
+          message: "Left-behind alert triggered from app!",
+          type: "left_behind",
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.details || 'Failed to send alert.');
+        throw new Error(errorData.details || "Failed to send alert.");
       }
 
       toast({
-        title: 'Alert Sent!',
-        description: `Successfully logged an alert for "${name}".`,
+        title: "Alert Sent!",
+        description: "The alert has been logged and sent to your device.",
       });
-      form.reset();
-    } catch (error: any) {
-      console.error('Error sending alert:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Uh oh! Something went wrong.',
-        description: error.message || 'Could not send the alert.',
-      });
-    }
-  }
 
-  if (isUserLoading || areDevicesLoading) {
-    return (
-      <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-xl">Loading...</div>
-      </div>
-    );
-  }
+    } catch (err: any) {
+      console.error(err);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: err.message || "Something went wrong",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
@@ -131,53 +78,36 @@ export default function DeviceAlertPage() {
         </Link>
         <Card>
           <CardHeader>
-            <CardTitle>Device Alert</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Bell className="h-6 w-6 text-primary" />
+              Send Device Alert
+            </CardTitle>
             <CardDescription>
-              Select a device to trigger its alert system.
+              Select a device to send a "left-behind" notification to.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                <FormField
-                  control={form.control}
-                  name="deviceId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Select Device</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select the target device" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {devices && devices.length > 0 ? (
-                            devices.map((device) => (
-                              <SelectItem key={device.id} value={device.id}>
-                                {device.metadata.name}
-                              </SelectItem>
-                            ))
-                          ) : (
-                            <SelectItem value="none" disabled>
-                              No devices found. Add one in settings.
-                            </SelectItem>
-                          )}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" disabled={!devices || devices.length === 0}>
-                  <Send className="mr-2 h-4 w-4" />
-                  Send Alert
-                </Button>
-              </form>
-            </Form>
+          <CardContent className="space-y-4">
+            <Select onValueChange={setSelectedDevice} value={selectedDevice}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a device..." />
+              </SelectTrigger>
+              <SelectContent>
+                {areDevicesLoading ? (
+                  <SelectItem value="loading" disabled>Loading devices...</SelectItem>
+                ) : devices && devices.length > 0 ? (
+                  devices.map(device => (
+                    <SelectItem key={device.id} value={device.metadata.deviceId}>
+                      {device.metadata.name}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="no-devices" disabled>No devices registered.</SelectItem>
+                )}
+              </SelectContent>
+            </Select>
+            <Button onClick={onSubmit} disabled={loading || !selectedDevice || areDevicesLoading} className="w-full">
+              {loading ? "Sending Alert..." : "Send Alert"}
+            </Button>
           </CardContent>
         </Card>
       </div>
