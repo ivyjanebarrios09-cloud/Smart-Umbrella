@@ -3,15 +3,11 @@ import admin from 'firebase-admin';
 
 // Initialize only once (important for Vercel/serverless)
 if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId: process.env.FIREBASE_PROJECT_ID!,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL!,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY!.replace(/\\n/g, '\n'),
-    }),
-  });
+  // When running on App Hosting, the SDK automatically discovers the correct service account credentials
+  // from the environment.
+  admin.initializeApp();
 }
 
 // These two exports are exactly what your API route needs
 export const db = admin.firestore();
-export const auth = admin.auth();   // This line fixes the "Export auth doesn't exist" error
+export const auth = admin.auth();
