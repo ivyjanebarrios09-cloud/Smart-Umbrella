@@ -86,7 +86,7 @@ service cloud.firestore {
        * @path /users/{userId}/weather/{weatherDataId}
        */
       match /weather/{weatherDataId} {
-         allow read, write: if isOwner(userId);
+         allow get, list, write: if isOwner(userId);
       }
     }
     
