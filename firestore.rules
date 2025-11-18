@@ -30,6 +30,12 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function isAdmin() {
+      // Allow access for a specific admin UID.
+      // REPLACE with your actual admin user's UID.
+      return request.auth.uid == 'd2La4nKBSUQYTF5aokjYjo1x3NH3';
+    }
+
     /**
      * @description Enforces user-level access control for user profiles.
      * @path /users/{userId}
@@ -96,7 +102,8 @@ service cloud.firestore {
      */
     match /weather/{docId} {
       allow read: if request.auth != null;
-      allow write: if false; // Protect this data from client-side writes
+      // Allow write only for admin users to initialize data.
+      allow write: if isAdmin();
     }
   }
 }
