@@ -3,39 +3,26 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // ──────────────────────────────────────────────────────────────
-    //  MAIN FIX: Allow every authenticated user to access THEIR OWN data
+    //  User Data Access
     // ──────────────────────────────────────────────────────────────
-    match /users/{userId} {
-      // The only correct check – must match the UID in the URL
+    match /users/{userId}/{document=**} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
-
-      // All subcollections automatically inherit the rule above
-      match /{document=**} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
     }
-    
-    // Allow any authenticated user to control devices
+
+    // ──────────────────────────────────────────────────────────────
+    //  Device State Control
+    // ──────────────────────────────────────────────────────────────
     match /devices/{deviceId} {
       allow read, write: if request.auth != null;
     }
 
     // ──────────────────────────────────────────────────────────────
-    //  Public weather data (readable by any logged-in user)
-    // ──────────────────────────────────────────────────────────────
+    //  Public Weather Data
+    // ────────────────────────────────_   ─────────────────────────────
     match /weather/{docId} {
       allow read: if request.auth != null;
       // Only your admin account can write global weather
-      allow write: if request.auth != null 
-                  && request.auth.uid == 'd2La4nKBSUQYTF5aokjYjo1x3NH3';
+      allow write: if request.auth != null && request.auth.uid == 'd2La4nKBSUQYTF5aokjYjo1x3NH3';
     }
-
-    // ──────────────────────────────────────────────────────────────
-    //  (Optional) Quick dev bypass – remove this block in production!
-    // ──────────────────────────────────────────────────────────────
-    // Uncomment the 3 lines below only when testing locally:
-    // match /{document=**} {
-    //   allow read, write: if request.auth != null;
-    // }
   }
 }
