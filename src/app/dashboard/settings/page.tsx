@@ -25,8 +25,8 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, doc, getDoc } from 'firebase/firestore';
-import type { Device, WeatherData } from '@/lib/types';
+import { collection } from 'firebase/firestore';
+import type { Device } from '@/lib/types';
 import { Input } from "@/components/ui/input";
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -101,7 +101,7 @@ export default function SettingsPage() {
   }
   
   const handleSyncWeather = async () => {
-    if (!user || !firestore) {
+    if (!user) {
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -113,32 +113,18 @@ export default function SettingsPage() {
     setIsSyncing(true);
 
     try {
-      const weatherDocRef = doc(firestore, 'weather/current');
-      const weatherSnap = await getDoc(weatherDocRef);
-      
-      if (!weatherSnap.exists()) {
-        throw new Error("Could not find current weather data to sync.");
+      const response = await fetch('/api/user-weather', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: user.uid }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.details || 'Failed to sync weather data.');
       }
-
-      const sourceData = weatherSnap.data() as WeatherData;
-      
-      const userWeatherCollectionRef = collection(firestore, `users/${user.uid}/weather`);
-      
-      // Transform the data to the flat structure before saving
-      const dataToSave: Omit<WeatherData, 'current' | 'id'> = {
-        latitude: sourceData.latitude,
-        longitude: sourceData.longitude,
-        location_str: sourceData.location_str,
-        time: sourceData.time,
-        updatedAt: new Date(),
-        temperature: sourceData.current?.temperature ?? 0,
-        windspeed: sourceData.current?.windspeed ?? 0,
-        condition: sourceData.current?.condition ?? "Cloudy",
-        weathercode: sourceData.current?.weathercode ?? 3,
-        forecast_daily_raw: sourceData.forecast_daily_raw,
-      };
-
-      await addDocumentNonBlocking(userWeatherCollectionRef, dataToSave);
       
       toast({
         title: 'Weather Synced!',
@@ -321,6 +307,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-    
-
