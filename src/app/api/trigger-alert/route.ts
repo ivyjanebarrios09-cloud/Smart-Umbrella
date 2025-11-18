@@ -9,9 +9,7 @@ import { z } from 'zod';
 // Initialize Firebase Admin SDK if not already initialized
 if (!admin.apps.length) {
   try {
-    admin.initializeApp({
-      credential: admin.credential.applicationDefault(),
-    });
+    admin.initializeApp();
   } catch (error) {
     console.error('Firebase admin initialization error', error);
   }
