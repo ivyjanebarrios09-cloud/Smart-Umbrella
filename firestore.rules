@@ -1,109 +1,36 @@
-
-/**
- * @fileoverview Firestore Security Rules for the Smart Umbrella Tracker App.
- *
- * Core Philosophy:
- * This ruleset enforces a strict user-ownership model for all data. Each user can only
- * access their own data. This is achieved by nesting all user-specific data under
- * the `/users/{userId}` path. Publicly readable data like weather is an exception.
- *
- * Data Structure:
- * - `/users/{userId}`: Stores user profiles. Only accessible by the user themselves.
- * - `/users/{userId}/devices/{deviceId}`: Stores devices owned by a user.
- * - `/users/{userId}/devices/{deviceId}/umbrellaActivity/{activityId}`: Activity log for a specific device.
- * - `/users/{userId}/notification_logs/{notificationLogId}`: Stores notification logs for a user.
- * - `/users/{userId}/alerts/{alertId}`: Stores alerts for a user.
- * - `/users/{userId}/weather_alert_preferences/{weatherAlertPreferenceId}`: Stores weather alert preferences for a user.
- * - `/users/{userId}/weather/{weatherDataId}`: Stores weather data logs for a user.
- * - `/weather/{doc}`: Stores public weather data. Readable by any authenticated user.
- *
- * Key Security Decisions:
- * - User listing is disallowed to prevent data leaks.
- * - Data is denormalized to avoid costly `get()` calls in security rules.  For example,
- *   the `userId` is included in the Device, NotificationLog, and WeatherAlertPreference
- *   documents to allow direct ownership checks.
- * - The rules explicitly deny any operation not specifically allowed.
- * - Authorization relies exclusively on the `request.auth` object, ensuring that all
- *   operations are performed by an authenticated user.
- */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isAdmin() {
-      // Allow access for a specific admin UID.
-      // REPLACE with your actual admin user's UID.
-      return request.auth.uid == 'd2La4nKBSUQYTF5aokjYjo1x3NH3';
-    }
-
-    /**
-     * @description Enforces user-level access control for user profiles.
-     * @path /users/{userId}
-     */
+    // ──────────────────────────────────────────────────────────────
+    //  MAIN FIX: Allow every authenticated user to access THEIR OWN data
+    // ──────────────────────────────────────────────────────────────
     match /users/{userId} {
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
+      // The only correct check – must match the UID in the URL
+      allow read, write: if request.auth != null && request.auth.uid == userId;
 
-      allow read, write: if isOwner(userId);
-
-      /**
-       * @description Enforces user-level access control for devices.
-       * @path /users/{userId}/devices/{deviceId}
-       */
-      match /devices/{deviceId} {
-        allow read, write: if isOwner(userId);
-        
-        /**
-         * @description Enforces user-level access control for umbrella activity.
-         * @path /users/{userId}/devices/{deviceId}/umbrellaActivity/{activityId}
-         */
-        match /umbrellaActivity/{activityId} {
-            allow read, write: if isOwner(userId);
-        }
-      }
-
-      /**
-       * @description Enforces user-level access control for notification logs.
-       * @path /users/{userId}/notification_logs/{notificationLogId}
-       */
-      match /notification_logs/{notificationLogId} {
-         allow read, write: if isOwner(userId);
-      }
-      
-      /**
-       * @description Enforces user-level access control for alerts.
-       * @path /users/{userId}/alerts/{alertId}
-       */
-      match /alerts/{alertId} {
-         allow read, write: if isOwner(userId);
-      }
-
-      /**
-       * @description Enforces user-level access control for weather alert preferences.
-       * @path /users/{userId}/weather_alert_preferences/{weatherAlertPreferenceId}
-       */
-      match /weather_alert_preferences/{weatherAlertPreferenceId} {
-         allow read, write: if isOwner(userId);
-      }
-
-      /**
-       * @description Enforces user-level access control for user-specific weather data.
-       * @path /users/{userId}/weather/{weatherDataId}
-       */
-      match /weather/{weatherDataId} {
-         allow get, list, write: if isOwner(userId);
+      // All subcollections automatically inherit the rule above
+      match /{document=**} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
       }
     }
-    
-    /**
-     * @description Allows any authenticated user to read weather data.
-     * @path /weather/{docId}
-     */
+
+    // ──────────────────────────────────────────────────────────────
+    //  Public weather data (readable by any logged-in user)
+    // ──────────────────────────────────────────────────────────────
     match /weather/{docId} {
       allow read: if request.auth != null;
-      // Allow write only for admin users to initialize data.
-      allow write: if isAdmin();
+      // Only your admin account can write global weather
+      allow write: if request.auth != null 
+                  && request.auth.uid == 'd2La4nKBSUQYTF5aokjYjo1x3NH3';
     }
+
+    // ──────────────────────────────────────────────────────────────
+    //  (Optional) Quick dev bypass – remove this block in production!
+    // ──────────────────────────────────────────────────────────────
+    // Uncomment the 3 lines below only when testing locally:
+    // match /{document=**} {
+    //   allow read, write: if request.auth != null;
+    // }
   }
 }
