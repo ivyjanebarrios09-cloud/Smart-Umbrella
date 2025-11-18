@@ -92,9 +92,9 @@ service cloud.firestore {
     
     /**
      * @description Allows any authenticated user to read weather data.
-     * @path /weather/{document=**}
+     * @path /weather/{docId}
      */
-    match /weather/{document=**} {
+    match /weather/{docId} {
       allow read: if request.auth != null;
       allow write: if false; // Protect this data from client-side writes
     }
