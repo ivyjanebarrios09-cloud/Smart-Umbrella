@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -29,13 +30,10 @@ import {
 import { collection, doc, serverTimestamp } from 'firebase/firestore';
 import type { Device } from '@/lib/types';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 
 export default function AlertPage() {
   const [loading, setLoading] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<string>('esp32-1'); // Default to esp32-1
-  const [ledState, setLedState] = useState(true);
-  const [buzzerState, setBuzzerState] = useState(false);
 
   const { user } = useUser();
   const firestore = useFirestore();
@@ -47,7 +45,7 @@ export default function AlertPage() {
 
   const { data: devices } = useCollection<Device>(devicesRef);
 
-  const onSubmit = async () => {
+  const sendCommand = async (ledState: boolean, buzzerState: boolean) => {
     if (!user || !firestore) {
       toast({
         variant: 'destructive',
@@ -77,16 +75,16 @@ export default function AlertPage() {
       });
       
       toast({
-        title: 'Device State Updated!',
-        description: `Updated ${selectedDevice} with new state.`,
+        title: 'Device Command Sent!',
+        description: `Sent command to ${selectedDevice}.`,
       });
 
     } catch (err: any) {
-      console.error('Failed to update device state:', err);
+      console.error('Failed to send command:', err);
       toast({
         variant: 'destructive',
-        title: 'Update Failed',
-        description: err.message || 'Could not update device state.',
+        title: 'Command Failed',
+        description: err.message || 'Could not send command to device.',
       });
     } finally {
       setLoading(false);
@@ -117,7 +115,7 @@ export default function AlertPage() {
 
           <CardContent className="space-y-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Select Device</label>
+              <Label className="text-sm font-medium">Select Device</Label>
               <Select value={selectedDevice} onValueChange={setSelectedDevice}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select a device..." />
@@ -139,32 +137,27 @@ export default function AlertPage() {
               </Select>
             </div>
             
-            <div className="space-y-4">
-               <div className="flex items-center justify-between rounded-lg border p-4">
-                <Label htmlFor="led-switch" className="flex items-center gap-2 font-medium">
-                  <Lightbulb className="h-5 w-5" />
-                  LED
-                </Label>
-                <Switch id="led-switch" checked={ledState} onCheckedChange={setLedState} />
-              </div>
-               <div className="flex items-center justify-between rounded-lg border p-4">
-                <Label htmlFor="buzzer-switch" className="flex items-center gap-2 font-medium">
-                  <Volume2 className="h-5 w-5" />
-                  Buzzer
-                </Label>
-                <Switch id="buzzer-switch" checked={buzzerState} onCheckedChange={setBuzzerState} />
-              </div>
+            <div className="grid grid-cols-2 gap-4">
+              <Button
+                onClick={() => sendCommand(true, false)}
+                disabled={loading || !user || !selectedDevice}
+                size="lg"
+                className="text-lg font-semibold"
+              >
+                 <Lightbulb className="mr-2 h-5 w-5" />
+                 LED ON
+              </Button>
+              <Button
+                onClick={() => sendCommand(false, true)}
+                disabled={loading || !user || !selectedDevice}
+                size="lg"
+                className="text-lg font-semibold"
+                variant="destructive"
+              >
+                <Volume2 className="mr-2 h-5 w-5" />
+                BUZZ
+              </Button>
             </div>
-
-
-            <Button
-              onClick={onSubmit}
-              disabled={loading || !user || !selectedDevice}
-              size="lg"
-              className="w-full text-lg font-semibold"
-            >
-              {loading ? <>Updating State...</> : <>Update Device State</>}
-            </Button>
 
             <p className="text-center text-xs text-muted-foreground">
               Changes will be sent to your device in real-time.
