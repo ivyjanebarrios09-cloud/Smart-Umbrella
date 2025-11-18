@@ -65,16 +65,13 @@ export default function AlertPage() {
     setLoading(true);
 
     try {
-      const idToken = await user.getIdToken();
-      
       const response = await fetch('/api/trigger-alert', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          idToken: idToken,
-          deviceId: selectedDeviceInfo.id,
+          deviceId: selectedDeviceInfo.metadata.deviceId,
           message: `Alert triggered for ${selectedDeviceInfo.metadata.name}`,
           type: 'custom',
         }),

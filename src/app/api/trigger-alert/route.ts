@@ -10,7 +10,6 @@ import { z } from 'zod';
 // or the logic moved to a real backend (e.g. cloud function).
 
 const alertSchema = z.object({
-  idToken: z.string(),
   deviceId: z.string(),
   message: z.string(),
   type: z.string(),
