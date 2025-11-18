@@ -2,7 +2,7 @@
 'use server';
 
 import { NextResponse, type NextRequest } from 'next/server';
-import { db, auth as adminAuth } from '@/lib/firebase-admin';
+import { db, auth } from '@/lib/firebase-admin';
 import { Timestamp } from 'firebase-admin/firestore';
 import { z } from 'zod';
 
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     const { idToken, deviceId, message, type } = parsedData.data;
 
     // 1. Verify the ID token using the Admin SDK
-    const decodedToken = await adminAuth.verifyIdToken(idToken);
+    const decodedToken = await auth.verifyIdToken(idToken);
     const uid = decodedToken.uid;
 
     // 2. Write to the user's `alerts` subcollection in Firestore
