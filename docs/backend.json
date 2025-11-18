@@ -55,10 +55,6 @@
               "type": "string",
               "description": "The unique hardware identifier for the device."
             },
-            "ipAddress": {
-              "type": "string",
-              "description": "The local IP address of the ESP32 device."
-            },
             "model": {
               "type": "string",
               "description": "The model of the device."

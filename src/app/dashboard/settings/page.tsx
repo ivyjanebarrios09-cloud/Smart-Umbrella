@@ -45,7 +45,6 @@ import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 const newDeviceFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   deviceId: z.string().min(1, { message: "Device ID is required." }),
-  ipAddress: z.string().ip({ message: "Please enter a valid IP address." }).optional().or(z.literal('')),
 });
 
 type NewDeviceFormValues = z.infer<typeof newDeviceFormSchema>;
@@ -76,7 +75,6 @@ export default function SettingsPage() {
     defaultValues: {
       name: '',
       deviceId: '',
-      ipAddress: '',
     },
   });
 
@@ -88,7 +86,6 @@ export default function SettingsPage() {
       metadata: {
         name: data.name,
         deviceId: data.deviceId,
-        ipAddress: data.ipAddress,
         model: 'UmbraGuard v1',
         createdAt: new Date(),
       },
@@ -266,19 +263,6 @@ export default function SettingsPage() {
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name="ipAddress"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Device IP Address</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., 192.168.1.100" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
                   <Button type="submit">Register Device</Button>
                 </form>
               </Form>
@@ -308,10 +292,6 @@ export default function SettingsPage() {
                          <div className="flex gap-2">
                             <Input id={`deviceId-${device.id}`} value={device.metadata.deviceId || 'N/A'} readOnly />
                             <Button variant="outline" onClick={() => copyToClipboard(device.metadata.deviceId || '')}>Copy ID</Button>
-                        </div>
-                        <div className="flex gap-2">
-                            <Input id={`ipAddress-${device.id}`} value={device.metadata.ipAddress || 'N/A'} readOnly />
-                            <Button variant="outline" onClick={() => copyToClipboard(device.metadata.ipAddress || '')}>Copy IP</Button>
                         </div>
                       </div>
                     ))}
